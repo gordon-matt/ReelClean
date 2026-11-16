@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ReelClean.Core/ReelClean.Core.csproj" />
+  <Project Path="ReelClean.Models/ReelClean.Models.csproj" />
+  <Project Path="ReelClean.Services/ReelClean.Services.csproj" />
+  <Project Path="ReelClean.Tests/ReelClean.Tests.csproj" />
+  <Project Path="ReelClean/ReelClean.csproj" />
+</Solution>

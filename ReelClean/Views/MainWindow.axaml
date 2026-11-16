@@ -1,0 +1,161 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
+        x:Class="ReelClean.Views.MainWindow"
+        Title="ReelClean"
+        Width="1180"
+        Height="800"
+        MinWidth="900"
+        MinHeight="640">
+	<DockPanel>
+		<Border DockPanel.Dock="Top" Padding="20,14" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+			<Grid ColumnDefinitions="*,Auto">
+				<StackPanel Spacing="2">
+					<TextBlock Text="ReelClean" FontSize="22" FontWeight="SemiBold" />
+					<TextBlock Text="Your media, properly named." Opacity="0.7" />
+				</StackPanel>
+				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+					<TextBox Width="240" PlaceholderText="TMDB API key" PasswordChar="•" Text="{Binding ApiKey}" />
+					<Button Content="Save" MinWidth="72" Command="{Binding SaveSettingsCommand}" />
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<Border DockPanel.Dock="Bottom" Padding="20,10" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+			<Grid ColumnDefinitions="*,Auto,Auto">
+				<TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" TextWrapping="Wrap" />
+				<Button Grid.Column="1" Content="Cancel" Margin="12,0,0,0" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" />
+				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12" Margin="16,0,0,0">
+					<ProgressBar Width="120" IsIndeterminate="True" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+					<TextBlock Opacity="0.65" VerticalAlignment="Center" Text="Metadata from TMDB. Not endorsed by TMDB." />
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<TabControl Margin="16">
+			<TabItem Header="1. Files">
+				<Grid ColumnDefinitions="2*,*" ColumnSpacing="16" Margin="4">
+					<DockPanel>
+						<StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,12">
+							<Grid ColumnDefinitions="*,Auto,Auto">
+								<TextBox PlaceholderText="Folder containing episodes" Text="{Binding FolderPath}" />
+								<Button Grid.Column="1" Content="Browse" Margin="8,0,0,0" MinWidth="80" Command="{Binding BrowseFolderCommand}" />
+								<Button Grid.Column="2" Content="Scan" Margin="8,0,0,0" MinWidth="80" Command="{Binding ScanCommand}" />
+							</Grid>
+							<StackPanel Orientation="Horizontal" Spacing="16">
+								<CheckBox Content="Include subfolders" IsChecked="{Binding ScanSubdirectories}" />
+								<CheckBox Content="Include hidden files" IsChecked="{Binding IncludeHiddenFiles}" />
+							</StackPanel>
+							<TextBlock Text="{Binding FileSummary}" Opacity="0.75" />
+						</StackPanel>
+						<ListBox ItemsSource="{Binding Files}">
+							<ListBox.ItemTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding FileName}" />
+								</DataTemplate>
+							</ListBox.ItemTemplate>
+						</ListBox>
+					</DockPanel>
+
+					<DockPanel Grid.Column="1">
+						<StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,12">
+							<TextBlock Text="Series" FontWeight="SemiBold" />
+							<Grid ColumnDefinitions="*,Auto">
+								<TextBox PlaceholderText="Search TMDB" Text="{Binding SearchQuery}" KeyDown="SearchQuery_KeyDown" />
+								<Button Grid.Column="1" Content="Search" Margin="8,0,0,0" MinWidth="80" Command="{Binding SearchSeriesCommand}" />
+							</Grid>
+							<TextBlock Text="Pick the series yourself. The folder name is not used." Opacity="0.7" TextWrapping="Wrap" />
+						</StackPanel>
+						<ListBox x:Name="SeriesList" ItemsSource="{Binding SeriesResults}" SelectionChanged="SeriesList_SelectionChanged">
+							<ListBox.ItemTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding Label}" />
+								</DataTemplate>
+							</ListBox.ItemTemplate>
+						</ListBox>
+					</DockPanel>
+				</Grid>
+			</TabItem>
+
+			<TabItem Header="2. Match">
+				<Grid RowDefinitions="Auto,*,Auto,220" Margin="4" RowSpacing="8">
+					<StackPanel Orientation="Horizontal" Spacing="12">
+						<TextBlock Text="{Binding SelectedSeriesLabel}" FontWeight="SemiBold" VerticalAlignment="Center" />
+						<Button Content="Reload metadata" Command="{Binding ReloadMetadataCommand}" />
+						<CheckBox Content="Only items that need attention" IsChecked="{Binding ShowNeedsReviewOnly}" VerticalAlignment="Center" />
+						<Button Content="Ignore" Command="{Binding IgnoreSelectedCommand}" />
+						<Button Content="Clear match" Command="{Binding ClearSelectedCommand}" />
+					</StackPanel>
+
+					<dg:DataGrid Grid.Row="1"
+					             ItemsSource="{Binding VisibleRows}"
+					             SelectedItem="{Binding SelectedRow}"
+					             AutoGenerateColumns="False"
+					             IsReadOnly="True"
+					             GridLinesVisibility="Horizontal"
+					             CanUserReorderColumns="False">
+						<dg:DataGrid.Columns>
+							<dg:DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="90" />
+							<dg:DataGridTextColumn Header="File" Binding="{Binding FileName}" Width="2*" />
+							<dg:DataGridTextColumn Header="Season" Binding="{Binding SeasonText}" Width="80" />
+							<dg:DataGridTextColumn Header="Episode" Binding="{Binding EpisodeText}" Width="90" />
+							<dg:DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*" />
+							<dg:DataGridTextColumn Header="Confidence" Binding="{Binding ConfidenceText}" Width="110" />
+							<dg:DataGridTextColumn Header="Proposed" Binding="{Binding ProposedFileName}" Width="2*" />
+						</dg:DataGrid.Columns>
+					</dg:DataGrid>
+
+					<TextBlock Grid.Row="2" Text="{Binding SelectedMessage}" TextWrapping="Wrap" Opacity="0.8" />
+
+					<Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+						<DockPanel>
+							<TextBox DockPanel.Dock="Top" PlaceholderText="Filter episodes" Text="{Binding EpisodeFilter}" Margin="0,0,0,8" />
+							<ListBox x:Name="EpisodeList" ItemsSource="{Binding FilteredEpisodes}" SelectionMode="Multiple">
+								<ListBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Label}" />
+									</DataTemplate>
+								</ListBox.ItemTemplate>
+							</ListBox>
+						</DockPanel>
+						<Button Grid.Column="1" Content="Use selected episodes" VerticalAlignment="Top" Click="UseSelectedEpisodes_Click" />
+					</Grid>
+				</Grid>
+			</TabItem>
+
+			<TabItem Header="3. Rename">
+				<Grid RowDefinitions="Auto,Auto,*" Margin="4" RowSpacing="12">
+					<StackPanel Spacing="8">
+						<TextBlock Text="{Binding PlanSummary}" FontWeight="SemiBold" />
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<ComboBox Width="160" ItemsSource="{Binding TemplateNames}" SelectedItem="{Binding TemplateName}" />
+							<CheckBox Content="Include episode titles" IsChecked="{Binding IncludeEpisodeTitles}" VerticalAlignment="Center" />
+							<Button Content="Rename" Command="{Binding RenameCommand}" />
+							<Button Content="Undo last rename" Command="{Binding UndoCommand}" />
+						</StackPanel>
+						<TextBox PlaceholderText="Custom template, for example {SeriesName} - S{Season:00}E{Episode:00} - {EpisodeName}"
+						         Text="{Binding CustomTemplate}"
+						         IsVisible="{Binding IsCustomTemplate}" />
+					</StackPanel>
+					<TextBlock Grid.Row="1" Opacity="0.7" TextWrapping="Wrap"
+					           Text="High-confidence matches can be renamed after you confirm. Medium, low, and unmatched files have to be fixed or ignored first. Files are renamed inside their current folder." />
+					<ListBox Grid.Row="2" ItemsSource="{Binding VisibleRows}">
+						<ListBox.ItemTemplate>
+							<DataTemplate>
+								<StackPanel Margin="0,4">
+									<Grid ColumnDefinitions="*,Auto,*">
+										<TextBlock Text="{Binding FileName}" TextWrapping="Wrap" />
+										<TextBlock Grid.Column="1" Text="→" Margin="12,0" Opacity="0.6" />
+										<TextBlock Grid.Column="2" Text="{Binding ProposedFileName}" TextWrapping="Wrap" />
+									</Grid>
+									<TextBlock Text="{Binding StatusText}" Opacity="0.7" />
+									<TextBlock Text="{Binding Messages}" TextWrapping="Wrap" IsVisible="{Binding HasMessages}" />
+								</StackPanel>
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+				</Grid>
+			</TabItem>
+		</TabControl>
+	</DockPanel>
+</Window>
