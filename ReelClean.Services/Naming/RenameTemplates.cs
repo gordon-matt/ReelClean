@@ -14,14 +14,16 @@ public static class RenameTemplates
 
     public static IReadOnlyList<TemplateToken> Tokens { get; } =
     [
-        new("{SeriesName}", "Series"),
-        new("{Year}", "Year"),
-        new("S{Season:00}E{Episode:00}", "S00E00"),
-        new("{EpisodeName}", "Title"),
+        new("{SeriesName}", "Series title"),
+        new("{Year}", "First air year"),
+        new("{Season:00}", "Season number"),
+        new("{Episode:00}", "Episode number"),
+        new("{EpisodeName}", "Episode title"),
         new("{AirDate}", "Air date"),
-        new("{OriginalFilename}", "Original"),
-        new("{Extension}", "Extension"),
-        new("/", "Folder"),
+        new("{OriginalFilename}", "Original file name"),
+        new("{Extension}", "File extension"),
+        new("S{Season:00}E{Episode:00}", "Season and episode together, such as S01E04"),
+        new("/", "Folder separator"),
     ];
 
     public static IReadOnlyList<string> Names { get; } =
@@ -37,7 +39,7 @@ public static class RenameTemplates
     {
         JellyfinName => "{SeriesName} ({Year})/Season {Season:00}/{SeriesName} - S{Season:00}E{Episode:00} - {EpisodeName}",
         KodiName => "{SeriesName}/Season {Season:00}/{SeriesName} - S{Season:00}E{Episode:00} - {EpisodeName}",
-        MinimalName => "{SeriesName} - S{Season:00}E{Episode:00}",
+        MinimalName => "S{Season:00}E{Episode:00} - {EpisodeName}",
         CustomName when !string.IsNullOrWhiteSpace(custom) => custom.Trim(),
         _ => "{SeriesName} - S{Season:00}E{Episode:00} - {EpisodeName}",
     };
