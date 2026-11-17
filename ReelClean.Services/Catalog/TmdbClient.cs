@@ -26,7 +26,7 @@ internal sealed class TmdbClient(HttpClient http, IOptions<ReelCleanOptions> opt
 
         return page.Results
             .Where(item => item.Id > 0 && !string.IsNullOrWhiteSpace(item.Name))
-            .Select(item => new TvSeries(item.Id, item.Name!.Trim(), Year(item.FirstAirDate), Poster(item.PosterPath)))
+            .Select(item => ToSeries(item.Id, item.Name, item.FirstAirDate, item.PosterPath, item.Overview))
             .ToList();
     }
 
@@ -43,7 +43,7 @@ internal sealed class TmdbClient(HttpClient http, IOptions<ReelCleanOptions> opt
             .Distinct()
             .Order()
             .ToList();
-        var series = new TvSeries(details.Id, details.Name.Trim(), Year(details.FirstAirDate), Poster(details.PosterPath));
+        var series = ToSeries(details.Id, details.Name, details.FirstAirDate, details.PosterPath, details.Overview);
         return new SeriesCacheEntry(series, seasons);
     }
 
@@ -97,6 +97,12 @@ internal sealed class TmdbClient(HttpClient http, IOptions<ReelCleanOptions> opt
     private static DateOnly? AirDate(string? date) =>
         DateOnly.TryParse(date, CultureInfo.InvariantCulture, out var parsed) ? parsed : null;
 
+    private static TvSeries ToSeries(int id, string? name, string? firstAirDate, string? posterPath, string? overview)
+    {
+        string? about = string.IsNullOrWhiteSpace(overview) ? null : overview.Trim();
+        return new TvSeries(id, name!.Trim(), Year(firstAirDate), Poster(posterPath), about, AirDate(firstAirDate));
+    }
+
     private static string? Poster(string? path) =>
         string.IsNullOrWhiteSpace(path) ? null : $"https://image.tmdb.org/t/p/w342{path}";
 
@@ -116,6 +122,8 @@ internal sealed class TmdbClient(HttpClient http, IOptions<ReelCleanOptions> opt
 
         [JsonPropertyName("poster_path")]
         public string? PosterPath { get; set; }
+
+        public string? Overview { get; set; }
     }
 
     private sealed class TmdbSeriesDetails
@@ -129,6 +137,8 @@ internal sealed class TmdbClient(HttpClient http, IOptions<ReelCleanOptions> opt
 
         [JsonPropertyName("poster_path")]
         public string? PosterPath { get; set; }
+
+        public string? Overview { get; set; }
 
         public List<TmdbSeasonSummary> Seasons { get; set; } = [];
     }

@@ -2,7 +2,13 @@ namespace ReelClean.Models;
 
 public sealed record VideoFile(string FullPath, string FileName, string Extension, long FileSize);
 
-public sealed record TvSeries(int TmdbId, string Name, int? FirstAirYear, string? PosterUrl);
+public sealed record TvSeries(
+    int TmdbId,
+    string Name,
+    int? FirstAirYear,
+    string? PosterUrl,
+    string? Overview = null,
+    DateOnly? FirstAirDate = null);
 
 public sealed record TvEpisode(
     int TmdbId,

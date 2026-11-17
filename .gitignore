@@ -6,6 +6,10 @@
 # dotenv files
 .env
 
+# The TMDB key is saved in the OS app-data folder. Keep local overrides and a copied settings file out of git.
+appsettings.Local.json
+settings.json
+
 # User-specific files
 *.rsuser
 *.suo

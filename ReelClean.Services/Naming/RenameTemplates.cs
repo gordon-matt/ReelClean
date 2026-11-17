@@ -12,6 +12,18 @@ public static class RenameTemplates
 
     public const string CustomName = "Custom";
 
+    public static IReadOnlyList<TemplateToken> Tokens { get; } =
+    [
+        new("{SeriesName}", "Series"),
+        new("{Year}", "Year"),
+        new("S{Season:00}E{Episode:00}", "S00E00"),
+        new("{EpisodeName}", "Title"),
+        new("{AirDate}", "Air date"),
+        new("{OriginalFilename}", "Original"),
+        new("{Extension}", "Extension"),
+        new("/", "Folder"),
+    ];
+
     public static IReadOnlyList<string> Names { get; } =
     [
         PlexName,
@@ -30,3 +42,5 @@ public static class RenameTemplates
         _ => "{SeriesName} - S{Season:00}E{Episode:00} - {EpisodeName}",
     };
 }
+
+public sealed record TemplateToken(string Value, string Label);

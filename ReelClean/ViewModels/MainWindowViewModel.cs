@@ -1,4 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Globalization;
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ReelClean.Services;
@@ -24,6 +27,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly ISettingsStore _settings;
     private readonly IFolderPicker _folders;
     private readonly IUserDialog _dialogs;
+    private readonly PosterLoader _posters;
     private readonly ReelCleanOptions _options;
     private readonly List<TvEpisode> _catalog = [];
     private readonly List<EpisodeChoice> _episodeChoices = [];
@@ -36,6 +40,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _includeEpisodeTitles;
     private bool _showNeedsReviewOnly;
     private string _episodeFilter = string.Empty;
+    private int _step;
+    private bool _episodesReady;
+    private CancellationTokenSource? _saveDelay;
 
     public MainWindowViewModel(
         IFileScanner scanner,
@@ -47,6 +54,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ISettingsStore settings,
         IFolderPicker folders,
         IUserDialog dialogs,
+        PosterLoader posters,
         ReelCleanOptions options)
     {
         _scanner = scanner;
@@ -58,6 +66,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _settings = settings;
         _folders = folders;
         _dialogs = dialogs;
+        _posters = posters;
         _options = options;
         _templateName = string.IsNullOrWhiteSpace(options.TemplateName) ? RenameTemplates.PlexName : options.TemplateName;
         _customTemplate = options.CustomTemplate;
@@ -79,9 +88,31 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public IReadOnlyList<string> TemplateNames { get; } = RenameTemplates.Names;
 
+    public IReadOnlyList<TemplateToken> TemplateTokens { get; } = RenameTemplates.Tokens;
+
     public SeriesChoice? SelectedSeries => _selectedSeries;
 
     public string SelectedSeriesLabel => _selectedSeries?.Label ?? "No series selected";
+
+    public Bitmap? SelectedPoster => _selectedSeries?.Poster;
+
+    public int Step => _step;
+
+    public bool IsFolderStep => _step == 0;
+
+    public bool IsSeriesStep => _step == 1;
+
+    public bool IsMatchStep => _step == 2;
+
+    public bool IsRenameStep => _step == 3;
+
+    public string StepTitle => _step switch
+    {
+        0 => "1 of 4  ·  Folder",
+        1 => "2 of 4  ·  Series",
+        2 => "3 of 4  ·  Match",
+        _ => "4 of 4  ·  Rename",
+    };
 
     public MatchRow? SelectedRow
     {
@@ -99,6 +130,30 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool IsCustomTemplate => TemplateName == RenameTemplates.CustomName;
 
+    public string CurrentPattern => RenameTemplates.PatternFor(TemplateName, CustomTemplate);
+
+    public bool HasSeriesDetails => _selectedSeries is not null;
+
+    public string SelectedOverview => string.IsNullOrWhiteSpace(_selectedSeries?.Series.Overview)
+        ? "No description from TMDB."
+        : _selectedSeries.Series.Overview!;
+
+    public string SelectedFacts
+    {
+        get
+        {
+            if (_selectedSeries is null)
+            {
+                return "Select a cover to see the year and description.";
+            }
+
+            TvSeries series = _selectedSeries.Series;
+            string when = series.FirstAirDate?.ToString("MMMM d, yyyy", CultureInfo.CurrentCulture)
+                ?? (series.FirstAirYear is int year ? year.ToString(CultureInfo.CurrentCulture) : "No first air date");
+            return $"{when}  ·  TV series";
+        }
+    }
+
     public string TemplateName
     {
         get => _templateName;
@@ -107,7 +162,9 @@ public partial class MainWindowViewModel : ViewModelBase
             if (SetProperty(ref _templateName, value))
             {
                 OnPropertyChanged(nameof(IsCustomTemplate));
+                OnPropertyChanged(nameof(CurrentPattern));
                 RebuildPlan();
+                RememberPreferences();
             }
         }
     }
@@ -119,7 +176,9 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             if (SetProperty(ref _customTemplate, value))
             {
+                OnPropertyChanged(nameof(CurrentPattern));
                 RebuildPlan();
+                RememberPreferences();
             }
         }
     }
@@ -132,6 +191,7 @@ public partial class MainWindowViewModel : ViewModelBase
             if (SetProperty(ref _includeEpisodeTitles, value))
             {
                 RebuildPlan();
+                RememberPreferences();
             }
         }
     }
@@ -198,6 +258,39 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private bool CanUndo() => !IsBusy && !string.IsNullOrWhiteSpace(LastManifest);
 
+    private bool CanGoBack() => _step > 0;
+
+    private bool CanGoNext() => !IsBusy && _step switch
+    {
+        0 => Files.Count > 0,
+        1 => _episodesReady,
+        2 => true,
+        _ => false,
+    };
+
+    [RelayCommand(CanExecute = nameof(CanGoBack))]
+    private void Previous() => MoveTo(_step - 1);
+
+    [RelayCommand(CanExecute = nameof(CanGoNext))]
+    private void Next() => MoveTo(_step + 1);
+
+    private void MoveTo(int step)
+    {
+        if (step < 0 || step > 3 || step == _step)
+        {
+            return;
+        }
+
+        _step = step;
+        OnPropertyChanged(nameof(Step));
+        OnPropertyChanged(nameof(IsFolderStep));
+        OnPropertyChanged(nameof(IsSeriesStep));
+        OnPropertyChanged(nameof(IsMatchStep));
+        OnPropertyChanged(nameof(IsRenameStep));
+        OnPropertyChanged(nameof(StepTitle));
+        NotifyNavigation();
+    }
+
     [RelayCommand(CanExecute = nameof(CanRun))]
     private async Task BrowseFolderAsync()
     {
@@ -225,16 +318,18 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        SeriesResults.Clear();
+        ClearSeriesResults();
         SelectSeries(null);
         foreach (var series in result.Value)
         {
-            SeriesResults.Add(new SeriesChoice(series));
+            var choice = new SeriesChoice(series);
+            SeriesResults.Add(choice);
+            _ = LoadPosterAsync(choice, cancellationToken);
         }
 
         StatusMessage = result.Value.Count == 0
             ? "No series matched that search."
-            : $"Found {result.Value.Count} series. Select the one these files belong to.";
+            : $"Found {result.Value.Count} series. Pick the cover that matches these files.";
         await _settings.SaveAsync(_options, cancellationToken);
     });
 
@@ -255,35 +350,15 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         ApplyOptions();
         await _settings.SaveAsync(_options);
-        StatusMessage = "Settings saved.";
+        StatusMessage = "Settings saved in your user profile, outside this project.";
         RebuildPlan();
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
-    private void IgnoreSelected()
-    {
-        if (SelectedRow is null)
-        {
-            StatusMessage = "Select a file first.";
-            return;
-        }
-
-        Replace(SelectedRow, _matcher.Ignore(SelectedRow.Match.File, SelectedRow.Match.Parsed));
-        StatusMessage = $"Ignored {SelectedRow.FileName}.";
-    }
+    private void IgnoreSelected() => ApplyToRows(_matcher.Ignore, "Ignored");
 
     [RelayCommand(CanExecute = nameof(CanRun))]
-    private void ClearSelected()
-    {
-        if (SelectedRow is null)
-        {
-            StatusMessage = "Select a file first.";
-            return;
-        }
-
-        Replace(SelectedRow, _matcher.Clear(SelectedRow.Match.File, SelectedRow.Match.Parsed));
-        StatusMessage = $"Cleared the match for {SelectedRow.FileName}.";
-    }
+    private void ClearSelected() => ApplyToRows(_matcher.Clear, "Cleared");
 
     [RelayCommand(CanExecute = nameof(CanRename))]
     private Task RenameAsync() => RunAsync(RenameCoreAsync);
@@ -311,6 +386,16 @@ public partial class MainWindowViewModel : ViewModelBase
         _run?.Cancel();
     }
 
+    public void ChooseSeries(SeriesChoice choice)
+    {
+        foreach (var item in SeriesResults)
+        {
+            item.IsSelected = ReferenceEquals(item, choice);
+        }
+
+        SelectSeries(choice);
+    }
+
     public void SelectSeries(SeriesChoice? choice)
     {
         if (ReferenceEquals(_selectedSeries, choice))
@@ -319,8 +404,14 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         _selectedSeries = choice;
+        _episodesReady = false;
         OnPropertyChanged(nameof(SelectedSeries));
         OnPropertyChanged(nameof(SelectedSeriesLabel));
+        OnPropertyChanged(nameof(SelectedPoster));
+        OnPropertyChanged(nameof(HasSeriesDetails));
+        OnPropertyChanged(nameof(SelectedOverview));
+        OnPropertyChanged(nameof(SelectedFacts));
+        NotifyNavigation();
         if (choice is null)
         {
             ClearMatches();
@@ -330,29 +421,99 @@ public partial class MainWindowViewModel : ViewModelBase
         _ = LoadSeriesAsync(choice, refresh: false);
     }
 
-    public void AssignEpisodes(IReadOnlyList<TvEpisode> episodes)
+    public void AssignEpisodes(IReadOnlyList<EpisodeChoice> selectedEpisodes, IReadOnlyList<MatchRow> selectedFiles)
     {
-        if (SelectedRow is null)
+        var episodes = CheckedEpisodes(selectedEpisodes);
+        var rows = RowsToEdit(selectedFiles);
+        if (rows.Count == 0)
         {
-            StatusMessage = "Select a file first.";
+            StatusMessage = "Check the files you want to update, or select one.";
             return;
         }
 
         if (episodes.Count == 0)
         {
-            StatusMessage = "Select one or more episodes.";
+            StatusMessage = "Check the episodes to assign. Shift-click selects a range, then use Check selected.";
             return;
         }
 
-        var match = _matcher.Confirm(SelectedRow.Match.File, SelectedRow.Match.Parsed, episodes);
-        Replace(SelectedRow, match);
-        StatusMessage = match.Status == MatchStatus.Confirmed
-            ? $"Assigned {SelectedRow.FileName}."
-            : match.Explanation;
+        foreach (MatchRow row in rows)
+        {
+            row.SetMatch(_matcher.Confirm(row.Match.File, row.Match.Parsed, episodes));
+        }
+
+        RebuildPlan();
+        StatusMessage = rows.Count == 1
+            ? $"Assigned {rows[0].FileName}."
+            : $"Assigned {rows.Count} files.";
+    }
+
+    public void CheckEpisodes(IReadOnlyList<EpisodeChoice> choices, bool check)
+    {
+        foreach (EpisodeChoice choice in choices)
+        {
+            choice.IsChecked = check;
+        }
+    }
+
+    [RelayCommand]
+    private void UncheckEpisodes()
+    {
+        foreach (EpisodeChoice choice in _episodeChoices)
+        {
+            choice.IsChecked = false;
+        }
+    }
+
+    public void CheckFiles(IReadOnlyList<MatchRow> rows, bool check)
+    {
+        foreach (MatchRow row in rows)
+        {
+            row.IsChecked = check;
+        }
+    }
+
+    [RelayCommand]
+    private void UncheckFiles()
+    {
+        foreach (MatchRow row in Rows)
+        {
+            row.IsChecked = false;
+        }
+    }
+
+    public void InsertToken(string token, int caret)
+    {
+        if (TemplateName != RenameTemplates.CustomName)
+        {
+            _customTemplate = RenameTemplates.PatternFor(TemplateName, CustomTemplate);
+            OnPropertyChanged(nameof(CustomTemplate));
+            TemplateName = RenameTemplates.CustomName;
+        }
+
+        string current = CustomTemplate ?? string.Empty;
+        caret = Math.Clamp(caret, 0, current.Length);
+        CustomTemplate = current.Insert(caret, token);
+    }
+
+    [RelayCommand]
+    private void OpenSeriesOnTmdb()
+    {
+        if (_selectedSeries is null)
+        {
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo($"https://www.themoviedb.org/tv/{_selectedSeries.Series.TmdbId}")
+        {
+            UseShellExecute = true,
+        });
     }
 
     private Task LoadSeriesAsync(SeriesChoice choice, bool refresh) => RunAsync(async cancellationToken =>
     {
+        _episodesReady = false;
+        NotifyNavigation();
         ApplyOptions();
         StatusMessage = refresh ? $"Refreshing {choice.Label}..." : $"Loading {choice.Label}...";
         var details = await _metadata.GetSeriesAsync(choice.Series.TmdbId, refresh, cancellationToken);
@@ -384,6 +545,8 @@ public partial class MainWindowViewModel : ViewModelBase
         RefreshEpisodes();
         cancellationToken.ThrowIfCancellationRequested();
         MatchFiles();
+        _episodesReady = true;
+        NotifyNavigation();
         StatusMessage = $"Loaded {episodes.Count} episodes for {choice.Label}.";
         await _settings.SaveAsync(_options, cancellationToken);
     });
@@ -405,15 +568,21 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         FileSummary = result.Value.Count == 1 ? "1 video file." : $"{result.Value.Count} video files.";
+        string? guessed = SeriesNameGuess.FromFolderAndFiles(FolderPath, result.Value.Select(file => file.FullPath).ToList());
+        if (!string.IsNullOrWhiteSpace(guessed))
+        {
+            SearchQuery = guessed;
+        }
+        StatusMessage = guessed is null
+            ? FileSummary + " Choose Next to pick the series."
+            : $"Suggested \"{guessed}\" in the series search. Choose Next, then press Search when it looks right.";
         if (_selectedSeries is null)
         {
             ClearMatches();
-            StatusMessage = FileSummary + " Search for the series these belong to.";
             return;
         }
 
         MatchFiles();
-        StatusMessage = $"Scanned {FileSummary.TrimEnd('.')}.";
     }
 
     private async Task RenameCoreAsync(CancellationToken cancellationToken)
@@ -548,8 +717,113 @@ public partial class MainWindowViewModel : ViewModelBase
         VisibleRows.Clear();
         SelectedRow = null;
         Plan = null;
+        _episodesReady = false;
         PlanSummary = Files.Count == 0 ? "Scan a folder to begin." : "Select a series to match these files.";
         NotifyPlan();
+        NotifyNavigation();
+    }
+
+    private void ClearSeriesResults()
+    {
+        foreach (var choice in SeriesResults)
+        {
+            choice.Poster?.Dispose();
+            choice.Poster = null;
+        }
+
+        SeriesResults.Clear();
+    }
+
+    private async Task LoadPosterAsync(SeriesChoice choice, CancellationToken cancellationToken)
+    {
+        Bitmap? poster = await _posters.LoadAsync(choice.Series.PosterUrl, cancellationToken);
+        if (poster is null || cancellationToken.IsCancellationRequested || !SeriesResults.Contains(choice))
+        {
+            poster?.Dispose();
+            return;
+        }
+
+        Bitmap? previous = choice.Poster;
+        choice.Poster = poster;
+        previous?.Dispose();
+        if (ReferenceEquals(choice, _selectedSeries))
+        {
+            OnPropertyChanged(nameof(SelectedPoster));
+        }
+    }
+
+    private void ApplyToRows(Func<VideoFile, ParsedFilename, EpisodeMatch> change, string verb)
+    {
+        List<MatchRow> rows = RowsToEdit([]);
+        if (rows.Count == 0)
+        {
+            StatusMessage = "Check the files you want to change, or select one.";
+            return;
+        }
+
+        foreach (MatchRow row in rows)
+        {
+            row.SetMatch(change(row.Match.File, row.Match.Parsed));
+        }
+
+        RebuildPlan();
+        StatusMessage = rows.Count == 1 ? $"{verb} {rows[0].FileName}." : $"{verb} {rows.Count} files.";
+    }
+
+    private List<TvEpisode> CheckedEpisodes(IReadOnlyList<EpisodeChoice> selected)
+    {
+        var chosen = _episodeChoices.Where(choice => choice.IsChecked).Select(choice => choice.Episode).ToList();
+        foreach (EpisodeChoice choice in selected)
+        {
+            if (chosen.All(episode => episode.TmdbId != choice.Episode.TmdbId))
+            {
+                chosen.Add(choice.Episode);
+            }
+        }
+
+        return chosen.OrderBy(episode => episode.SeasonNumber).ThenBy(episode => episode.EpisodeNumber).ToList();
+    }
+
+    private List<MatchRow> RowsToEdit(IReadOnlyList<MatchRow> selected)
+    {
+        var rows = Rows.Where(row => row.IsChecked).ToList();
+        if (rows.Count > 0)
+        {
+            return rows;
+        }
+
+        if (selected.Count > 0)
+        {
+            return selected.ToList();
+        }
+
+        return SelectedRow is null ? [] : [SelectedRow];
+    }
+
+    private void RememberPreferences()
+    {
+        ApplyOptions();
+        _saveDelay?.Cancel();
+        var delay = new CancellationTokenSource();
+        _saveDelay = delay;
+        _ = SavePreferencesAsync(delay.Token);
+    }
+
+    private async Task SavePreferencesAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(400, cancellationToken);
+            await _settings.SaveAsync(_options, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer edit replaced this save.
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            StatusMessage = "Could not save your rename template.";
+        }
     }
 
     private string CurrentTemplate() => RenameTemplates.PatternFor(TemplateName, CustomTemplate);
@@ -611,6 +885,13 @@ public partial class MainWindowViewModel : ViewModelBase
         ClearSelectedCommand.NotifyCanExecuteChanged();
         RenameCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();
+        NotifyNavigation();
+    }
+
+    private void NotifyNavigation()
+    {
+        PreviousCommand.NotifyCanExecuteChanged();
+        NextCommand.NotifyCanExecuteChanged();
     }
 
     private static string Describe(IResult result)

@@ -14,7 +14,7 @@ public class TmdbClientTests
         var client = Client("""
             {
               "results": [
-                { "id": 2316, "name": "The Office", "first_air_date": "2005-03-24", "poster_path": "/office.jpg" }
+                { "id": 2316, "name": "The Office", "first_air_date": "2005-03-24", "poster_path": "/office.jpg", "overview": "A mockumentary." }
               ]
             }
             """);
@@ -26,6 +26,8 @@ public class TmdbClientTests
         Assert.Equal("The Office", hit.Name);
         Assert.Equal(2005, hit.FirstAirYear);
         Assert.Equal("https://image.tmdb.org/t/p/w342/office.jpg", hit.PosterUrl);
+        Assert.Equal("A mockumentary.", hit.Overview);
+        Assert.Equal(new DateOnly(2005, 3, 24), hit.FirstAirDate);
     }
 
     [Fact]

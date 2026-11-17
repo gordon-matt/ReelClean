@@ -20,7 +20,11 @@ TMDB JSON stays inside `TmdbClient`, the same way ReelSoon hides its TMDB payloa
 
 ## TMDB key
 
-Create a v3 API key at themoviedb.org and paste it into the box at the top of the window, then click Save. It is stored in `%AppData%\ReelClean\settings.json` on Windows (the OS application-data folder on macOS and Linux). You can also set `Tmdb:ApiKey` in `appsettings.json` or the `Tmdb__ApiKey` environment variable before the first save.
+Create a v3 API key at themoviedb.org, paste it into the box at the top of the window, and click Save.
+
+Save writes `%AppData%\ReelClean\settings.json` on Windows, and the equivalent application-data folder on macOS and Linux. That folder is outside this repository, so the key is not committed. `appsettings.json` is for logging and other app configuration, and it does not contain a TMDB key. A gitignored `appsettings.Local.json`, or the `Tmdb__ApiKey` environment variable, can supply the key before the first save. After you click Save, the app-data file is the one the app uses.
+
+The rename template, including a custom pattern, is saved in that same user-profile file when you change it.
 
 The client calls `https://api.themoviedb.org/3/` with the `api_key` query parameter, same as ReelSoon.
 

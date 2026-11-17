@@ -1,3 +1,4 @@
+using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ReelClean.ViewModels;
@@ -7,6 +8,7 @@ public sealed class MatchRow : ObservableObject
     private string _proposedFileName = string.Empty;
     private PlanStatus _status;
     private string _messages = string.Empty;
+    private bool _isChecked;
 
     public MatchRow(EpisodeMatch match)
     {
@@ -93,6 +95,14 @@ public sealed class MatchRow : ObservableObject
 
     public bool HasMessages => Messages.Length > 0;
 
+    public bool IsChecked
+    {
+        get => _isChecked;
+        set => SetProperty(ref _isChecked, value);
+    }
+
+    public void SetMatch(EpisodeMatch match) => Match = match;
+
     public void Update(EpisodeMatch match, RenameOperation operation)
     {
         Match = match;
@@ -107,12 +117,37 @@ public sealed class MatchRow : ObservableObject
     }
 }
 
-public sealed record SeriesChoice(TvSeries Series)
+public sealed partial class SeriesChoice : ObservableObject
 {
-    public string Label => Series.FirstAirYear is int year ? $"{Series.Name} ({year})" : Series.Name;
+    public SeriesChoice(TvSeries series)
+    {
+        Series = series;
+        Label = series.FirstAirYear is int year ? $"{series.Name} ({year})" : series.Name;
+    }
+
+    public TvSeries Series { get; }
+
+    public string Label { get; }
+
+    [ObservableProperty]
+    public partial Bitmap? Poster { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsSelected { get; set; }
 }
 
-public sealed record EpisodeChoice(TvEpisode Episode)
+public sealed partial class EpisodeChoice : ObservableObject
 {
-    public string Label => $"S{Episode.SeasonNumber:00}E{Episode.EpisodeNumber:00}  {Episode.Name}";
+    public EpisodeChoice(TvEpisode episode)
+    {
+        Episode = episode;
+        Label = $"S{episode.SeasonNumber:00}E{episode.EpisodeNumber:00}  {episode.Name}";
+    }
+
+    public TvEpisode Episode { get; }
+
+    public string Label { get; }
+
+    [ObservableProperty]
+    public partial bool IsChecked { get; set; }
 }

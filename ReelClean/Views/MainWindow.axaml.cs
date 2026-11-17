@@ -12,11 +12,11 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
-    private void SeriesList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void Poster_Click(object? sender, RoutedEventArgs e)
     {
-        if (DataContext is MainWindowViewModel viewModel && sender is ListBox list)
+        if (sender is Button { DataContext: SeriesChoice choice } && DataContext is MainWindowViewModel viewModel)
         {
-            viewModel.SelectSeries(list.SelectedItem as SeriesChoice);
+            viewModel.ChooseSeries(choice);
         }
     }
 
@@ -35,7 +35,57 @@ public partial class MainWindow : Window
             return;
         }
 
-        var episodes = EpisodeList.SelectedItems?.OfType<EpisodeChoice>().Select(choice => choice.Episode).ToList() ?? [];
-        viewModel.AssignEpisodes(episodes);
+        viewModel.AssignEpisodes(SelectedEpisodes(), SelectedFiles());
     }
+
+    private void CheckSelectedEpisodes_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            viewModel.CheckEpisodes(SelectedEpisodes(), check: true);
+        }
+    }
+
+    private void UncheckSelectedEpisodes_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            viewModel.CheckEpisodes(SelectedEpisodes(), check: false);
+        }
+    }
+
+    private void CheckSelectedFiles_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            viewModel.CheckFiles(SelectedFiles(), check: true);
+        }
+    }
+
+    private void UncheckSelectedFiles_Click(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            viewModel.CheckFiles(SelectedFiles(), check: false);
+        }
+    }
+
+    private void Token_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string token } || DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        int caret = viewModel.IsCustomTemplate ? CustomTemplateBox.CaretIndex : viewModel.CurrentPattern.Length;
+        viewModel.InsertToken(token, caret);
+        CustomTemplateBox.CaretIndex = Math.Min(caret + token.Length, viewModel.CustomTemplate.Length);
+        CustomTemplateBox.Focus();
+    }
+
+    private List<EpisodeChoice> SelectedEpisodes() =>
+        EpisodeList.SelectedItems?.OfType<EpisodeChoice>().ToList() ?? [];
+
+    private List<MatchRow> SelectedFiles() =>
+        MatchGrid.SelectedItems?.OfType<MatchRow>().ToList() ?? [];
 }
