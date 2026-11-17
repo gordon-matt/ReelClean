@@ -34,11 +34,11 @@ public partial class MainWindowViewModel : ViewModelBase
     private CancellationTokenSource? _run;
     private int _runId;
     private SeriesChoice? _selectedSeries;
-    private MatchRow? _selectedRow;
+    private MappingRow? _selectedMapping;
+    private VideoFile? _selectedSourceFile;
     private string _templateName;
     private string _customTemplate;
     private bool _includeEpisodeTitles;
-    private bool _showNeedsReviewOnly;
     private string _episodeFilter = string.Empty;
     private int _step;
     private bool _episodesReady;
@@ -80,11 +80,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public ObservableCollection<SeriesChoice> SeriesResults { get; } = [];
 
-    public ObservableCollection<MatchRow> Rows { get; } = [];
+    public ObservableCollection<VideoFile> SourceFiles { get; } = [];
 
-    public ObservableCollection<MatchRow> VisibleRows { get; } = [];
+    public ObservableCollection<EpisodeChoice> DestinationEpisodes { get; } = [];
 
-    public ObservableCollection<EpisodeChoice> FilteredEpisodes { get; } = [];
+    public ObservableCollection<MappingRow> Mappings { get; } = [];
 
     public IReadOnlyList<string> TemplateNames { get; } = RenameTemplates.Names;
 
@@ -114,19 +114,17 @@ public partial class MainWindowViewModel : ViewModelBase
         _ => "4 of 4  ·  Rename",
     };
 
-    public MatchRow? SelectedRow
+    public VideoFile? SelectedSourceFile
     {
-        get => _selectedRow;
-        set
-        {
-            if (SetProperty(ref _selectedRow, value))
-            {
-                OnPropertyChanged(nameof(SelectedMessage));
-            }
-        }
+        get => _selectedSourceFile;
+        set => SetProperty(ref _selectedSourceFile, value);
     }
 
-    public string SelectedMessage => _selectedRow?.Messages ?? string.Empty;
+    public MappingRow? SelectedMapping
+    {
+        get => _selectedMapping;
+        set => SetProperty(ref _selectedMapping, value);
+    }
 
     public bool IsCustomTemplate => TemplateName == RenameTemplates.CustomName;
 
@@ -196,18 +194,6 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    public bool ShowNeedsReviewOnly
-    {
-        get => _showNeedsReviewOnly;
-        set
-        {
-            if (SetProperty(ref _showNeedsReviewOnly, value))
-            {
-                RefreshVisible();
-            }
-        }
-    }
-
     public string EpisodeFilter
     {
         get => _episodeFilter;
@@ -215,7 +201,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             if (SetProperty(ref _episodeFilter, value))
             {
-                RefreshEpisodes();
+                RefreshDestinations();
             }
         }
     }
@@ -355,10 +341,32 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
-    private void IgnoreSelected() => ApplyToRows(_matcher.Ignore, "Ignored");
+    private void AutoMap()
+    {
+        int added = AutoMapRemaining();
+        RebuildPlan();
+        StatusMessage = added == 0
+            ? "No further files could be mapped from their names."
+            : $"Mapped {added} file(s). {SourceFiles.Count} still unmapped.";
+    }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
-    private void ClearSelected() => ApplyToRows(_matcher.Clear, "Cleared");
+    private void RemoveMapping()
+    {
+        if (SelectedMapping is null)
+        {
+            StatusMessage = "Select a mapping to remove.";
+            return;
+        }
+
+        MappingRow mapping = SelectedMapping;
+        SelectedMapping = null;
+        Mappings.Remove(mapping);
+        InsertFile(mapping.Match.File);
+        RefreshDestinations();
+        RebuildPlan();
+        StatusMessage = $"Removed {mapping.Source}.";
+    }
 
     [RelayCommand(CanExecute = nameof(CanRename))]
     private Task RenameAsync() => RunAsync(RenameCoreAsync);
@@ -421,65 +429,32 @@ public partial class MainWindowViewModel : ViewModelBase
         _ = LoadSeriesAsync(choice, refresh: false);
     }
 
-    public void AssignEpisodes(IReadOnlyList<EpisodeChoice> selectedEpisodes, IReadOnlyList<MatchRow> selectedFiles)
+    public void AddMapping(VideoFile? file, IReadOnlyList<TvEpisode> episodes)
     {
-        var episodes = CheckedEpisodes(selectedEpisodes);
-        var rows = RowsToEdit(selectedFiles);
-        if (rows.Count == 0)
+        if (file is null)
         {
-            StatusMessage = "Check the files you want to update, or select one.";
+            StatusMessage = "Select a file on the left.";
             return;
         }
 
         if (episodes.Count == 0)
         {
-            StatusMessage = "Check the episodes to assign. Shift-click selects a range, then use Check selected.";
+            StatusMessage = "Select an episode on the right.";
             return;
         }
 
-        foreach (MatchRow row in rows)
+        ParsedFilename parsed = _parser.Parse(file.FileName);
+        EpisodeMatch match = _matcher.Confirm(file, parsed, episodes);
+        if (match.Status != MatchStatus.Confirmed)
         {
-            row.SetMatch(_matcher.Confirm(row.Match.File, row.Match.Parsed, episodes));
+            StatusMessage = match.Explanation;
+            return;
         }
 
+        Commit(match);
+        RefreshDestinations();
         RebuildPlan();
-        StatusMessage = rows.Count == 1
-            ? $"Assigned {rows[0].FileName}."
-            : $"Assigned {rows.Count} files.";
-    }
-
-    public void CheckEpisodes(IReadOnlyList<EpisodeChoice> choices, bool check)
-    {
-        foreach (EpisodeChoice choice in choices)
-        {
-            choice.IsChecked = check;
-        }
-    }
-
-    [RelayCommand]
-    private void UncheckEpisodes()
-    {
-        foreach (EpisodeChoice choice in _episodeChoices)
-        {
-            choice.IsChecked = false;
-        }
-    }
-
-    public void CheckFiles(IReadOnlyList<MatchRow> rows, bool check)
-    {
-        foreach (MatchRow row in rows)
-        {
-            row.IsChecked = check;
-        }
-    }
-
-    [RelayCommand]
-    private void UncheckFiles()
-    {
-        foreach (MatchRow row in Rows)
-        {
-            row.IsChecked = false;
-        }
+        StatusMessage = $"Mapped {file.FileName}.";
     }
 
     public void InsertToken(string token, int caret)
@@ -540,14 +515,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _catalog.Clear();
         _catalog.AddRange(episodes);
-        _episodeChoices.Clear();
-        _episodeChoices.AddRange(episodes.Select(episode => new EpisodeChoice(episode)));
-        RefreshEpisodes();
         cancellationToken.ThrowIfCancellationRequested();
         MatchFiles();
         _episodesReady = true;
         NotifyNavigation();
-        StatusMessage = $"Loaded {episodes.Count} episodes for {choice.Label}.";
         await _settings.SaveAsync(_options, cancellationToken);
     });
 
@@ -628,83 +599,131 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void MatchFiles()
     {
-        Rows.Clear();
-        foreach (var file in Files)
+        Mappings.Clear();
+        SourceFiles.Clear();
+        foreach (VideoFile file in Files.OrderBy(file => file.FileName, StringComparer.OrdinalIgnoreCase))
         {
-            var parsed = _parser.Parse(file.FileName);
-            Rows.Add(new MatchRow(_matcher.Match(file, parsed, _catalog)));
+            SourceFiles.Add(file);
         }
 
+        _episodeChoices.Clear();
+        _episodeChoices.AddRange(_catalog
+            .OrderBy(episode => episode.SeasonNumber)
+            .ThenBy(episode => episode.EpisodeNumber)
+            .Select(episode => new EpisodeChoice(episode)));
+        RefreshDestinations();
+        int added = AutoMapRemaining();
         RebuildPlan();
+        StatusMessage = added == 0
+            ? $"No files were mapped from their names. {SourceFiles.Count} are still on the left."
+            : $"Mapped {added} file(s). {SourceFiles.Count} still unmapped.";
     }
 
-    private void Replace(MatchRow row, EpisodeMatch match)
+    private int AutoMapRemaining()
     {
-        int index = Rows.IndexOf(row);
-        if (index < 0)
+        var mappedIds = Mappings.SelectMany(mapping => mapping.Match.Episodes).Select(episode => episode.TmdbId).ToHashSet();
+        var available = _episodeChoices
+            .Select(choice => choice.Episode)
+            .Where(episode => !mappedIds.Contains(episode.TmdbId))
+            .ToList();
+        var accepted = new List<EpisodeMatch>();
+        foreach (VideoFile file in SourceFiles.ToList())
         {
-            return;
+            ParsedFilename parsed = _parser.Parse(file.FileName);
+            EpisodeMatch match = _matcher.Match(file, parsed, available);
+            if (match.Episodes.Count == 0)
+            {
+                continue;
+            }
+
+            foreach (TvEpisode episode in match.Episodes)
+            {
+                available.RemoveAll(candidate => candidate.TmdbId == episode.TmdbId);
+            }
+
+            accepted.Add(match with { Status = MatchStatus.Confirmed });
         }
 
-        var updated = new MatchRow(match);
-        Rows[index] = updated;
-        SelectedRow = updated;
-        RebuildPlan();
+        foreach (EpisodeMatch match in accepted)
+        {
+            Commit(match);
+        }
+
+        if (accepted.Count > 0)
+        {
+            RefreshDestinations();
+        }
+
+        return accepted.Count;
+    }
+
+    private void Commit(EpisodeMatch match)
+    {
+        SourceFiles.Remove(match.File);
+        Mappings.Add(new MappingRow(match));
+    }
+
+    private void InsertFile(VideoFile file)
+    {
+        int index = 0;
+        while (index < SourceFiles.Count
+            && string.Compare(SourceFiles[index].FileName, file.FileName, StringComparison.OrdinalIgnoreCase) < 0)
+        {
+            index++;
+        }
+
+        SourceFiles.Insert(index, file);
     }
 
     private void RebuildPlan()
     {
-        if (_selectedSeries is null || Rows.Count == 0)
+        if (_selectedSeries is null || Mappings.Count == 0)
         {
             Plan = null;
-            PlanSummary = Files.Count == 0 ? "Scan a folder to begin." : "Select a series to match these files.";
+            PlanSummary = Mappings.Count == 0
+                ? "Map a file to an episode before renaming."
+                : "Select a series to match these files.";
             NotifyPlan();
             return;
         }
 
-        Plan = _planner.CreatePlan(FolderPath, _selectedSeries.Series, Rows.Select(row => row.Match).ToList(), CurrentTemplate(), IncludeEpisodeTitles);
-        foreach (var operation in Plan.Operations)
+        Plan = _planner.CreatePlan(
+            FolderPath,
+            _selectedSeries.Series,
+            Mappings.Select(mapping => mapping.Match).ToList(),
+            CurrentTemplate(),
+            IncludeEpisodeTitles);
+        foreach (RenameOperation operation in Plan.Operations)
         {
-            var row = Rows.FirstOrDefault(item => PathComparison.Equal(item.Match.File.FullPath, operation.Match.File.FullPath));
-            row?.Update(operation.Match, operation);
+            MappingRow? mapping = Mappings.FirstOrDefault(item => PathComparison.Equal(item.Match.File.FullPath, operation.Match.File.FullPath));
+            mapping?.Apply(operation);
         }
 
-        PlanSummary = $"{Plan.ReadyCount} ready, {Plan.ReviewCount} to review, {Plan.InvalidCount} invalid, {Plan.IgnoredCount} ignored.";
-        RefreshVisible();
+        PlanSummary = SourceFiles.Count == 0
+            ? $"{Plan.ReadyCount} ready to rename."
+            : $"{Plan.ReadyCount} ready to rename. {SourceFiles.Count} file(s) are not mapped and will be left as they are.";
+        if (Plan.InvalidCount > 0)
+        {
+            PlanSummary += $" {Plan.InvalidCount} mapping(s) need to be removed.";
+        }
+
         NotifyPlan();
     }
 
-    private void RefreshVisible()
+    private void RefreshDestinations()
     {
-        var selected = SelectedRow;
-        VisibleRows.Clear();
-        foreach (var row in Rows)
-        {
-            if (!ShowNeedsReviewOnly || row.Status is PlanStatus.NeedsReview or PlanStatus.Invalid)
-            {
-                VisibleRows.Add(row);
-            }
-        }
-
-        if (selected is not null && VisibleRows.Contains(selected))
-        {
-            SelectedRow = selected;
-        }
-    }
-
-    private void RefreshEpisodes()
-    {
-        FilteredEpisodes.Clear();
-        IEnumerable<EpisodeChoice> choices = _episodeChoices;
+        var mappedIds = Mappings.SelectMany(mapping => mapping.Match.Episodes).Select(episode => episode.TmdbId).ToHashSet();
+        DestinationEpisodes.Clear();
+        IEnumerable<EpisodeChoice> choices = _episodeChoices.Where(choice => !mappedIds.Contains(choice.Episode.TmdbId));
         if (!string.IsNullOrWhiteSpace(EpisodeFilter))
         {
             string term = EpisodeFilter.Trim();
             choices = choices.Where(choice => choice.Label.Contains(term, StringComparison.OrdinalIgnoreCase));
         }
 
-        foreach (var choice in choices)
+        foreach (EpisodeChoice choice in choices)
         {
-            FilteredEpisodes.Add(choice);
+            DestinationEpisodes.Add(choice);
         }
     }
 
@@ -712,10 +731,11 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         _catalog.Clear();
         _episodeChoices.Clear();
-        FilteredEpisodes.Clear();
-        Rows.Clear();
-        VisibleRows.Clear();
-        SelectedRow = null;
+        SourceFiles.Clear();
+        DestinationEpisodes.Clear();
+        Mappings.Clear();
+        SelectedSourceFile = null;
+        SelectedMapping = null;
         Plan = null;
         _episodesReady = false;
         PlanSummary = Files.Count == 0 ? "Scan a folder to begin." : "Select a series to match these files.";
@@ -750,54 +770,6 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             OnPropertyChanged(nameof(SelectedPoster));
         }
-    }
-
-    private void ApplyToRows(Func<VideoFile, ParsedFilename, EpisodeMatch> change, string verb)
-    {
-        List<MatchRow> rows = RowsToEdit([]);
-        if (rows.Count == 0)
-        {
-            StatusMessage = "Check the files you want to change, or select one.";
-            return;
-        }
-
-        foreach (MatchRow row in rows)
-        {
-            row.SetMatch(change(row.Match.File, row.Match.Parsed));
-        }
-
-        RebuildPlan();
-        StatusMessage = rows.Count == 1 ? $"{verb} {rows[0].FileName}." : $"{verb} {rows.Count} files.";
-    }
-
-    private List<TvEpisode> CheckedEpisodes(IReadOnlyList<EpisodeChoice> selected)
-    {
-        var chosen = _episodeChoices.Where(choice => choice.IsChecked).Select(choice => choice.Episode).ToList();
-        foreach (EpisodeChoice choice in selected)
-        {
-            if (chosen.All(episode => episode.TmdbId != choice.Episode.TmdbId))
-            {
-                chosen.Add(choice.Episode);
-            }
-        }
-
-        return chosen.OrderBy(episode => episode.SeasonNumber).ThenBy(episode => episode.EpisodeNumber).ToList();
-    }
-
-    private List<MatchRow> RowsToEdit(IReadOnlyList<MatchRow> selected)
-    {
-        var rows = Rows.Where(row => row.IsChecked).ToList();
-        if (rows.Count > 0)
-        {
-            return rows;
-        }
-
-        if (selected.Count > 0)
-        {
-            return selected.ToList();
-        }
-
-        return SelectedRow is null ? [] : [SelectedRow];
     }
 
     private void RememberPreferences()
@@ -881,8 +853,8 @@ public partial class MainWindowViewModel : ViewModelBase
         SearchSeriesCommand.NotifyCanExecuteChanged();
         ReloadMetadataCommand.NotifyCanExecuteChanged();
         SaveSettingsCommand.NotifyCanExecuteChanged();
-        IgnoreSelectedCommand.NotifyCanExecuteChanged();
-        ClearSelectedCommand.NotifyCanExecuteChanged();
+        AutoMapCommand.NotifyCanExecuteChanged();
+        RemoveMappingCommand.NotifyCanExecuteChanged();
         RenameCommand.NotifyCanExecuteChanged();
         UndoCommand.NotifyCanExecuteChanged();
         NotifyNavigation();

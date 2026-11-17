@@ -153,70 +153,59 @@
 			</Grid>
 
 			<Grid IsVisible="{Binding IsMatchStep}" RowDefinitions="Auto,*" RowSpacing="8">
-				<StackPanel Spacing="6">
-					<StackPanel Orientation="Horizontal" Spacing="12">
-						<Border Width="42" Height="63" CornerRadius="4" ClipToBounds="True" IsVisible="{Binding SelectedPoster, Converter={x:Static conv:ObjectConverters.IsNotNull}}">
-							<Image Source="{Binding SelectedPoster}" Stretch="UniformToFill" />
-						</Border>
-						<TextBlock Text="{Binding SelectedSeriesLabel}" FontWeight="SemiBold" VerticalAlignment="Center" />
-						<Button Content="Reload metadata" Command="{Binding ReloadMetadataCommand}" />
-						<CheckBox Content="Only files that need attention" IsChecked="{Binding ShowNeedsReviewOnly}" VerticalAlignment="Center" />
-					</StackPanel>
-					<TextBlock Opacity="0.75" TextWrapping="Wrap"
-					           Text="Tick the files and the episodes, then assign. Shift-click still selects a range; Check selected ticks that range." />
+				<StackPanel Orientation="Horizontal" Spacing="12">
+					<Border Width="42" Height="63" CornerRadius="4" ClipToBounds="True" IsVisible="{Binding SelectedPoster, Converter={x:Static conv:ObjectConverters.IsNotNull}}">
+						<Image Source="{Binding SelectedPoster}" Stretch="UniformToFill" />
+					</Border>
+					<TextBlock Text="{Binding SelectedSeriesLabel}" FontWeight="SemiBold" VerticalAlignment="Center" />
+					<Button Content="Reload metadata" Command="{Binding ReloadMetadataCommand}" />
+					<TextBlock Opacity="0.75" VerticalAlignment="Center" TextWrapping="Wrap"
+					           Text="Files that are mapped move to the middle. Anything left on the left is not renamed." />
 				</StackPanel>
 
-				<Grid Grid.Row="1" ColumnDefinitions="*,340" ColumnSpacing="16">
+				<Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="12">
 					<DockPanel>
-						<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
-							<Button Content="Check selected" Click="CheckSelectedFiles_Click" />
-							<Button Content="Uncheck selected" Click="UncheckSelectedFiles_Click" />
-							<Button Content="Uncheck all" Command="{Binding UncheckFilesCommand}" />
-							<Button Content="Ignore checked" Command="{Binding IgnoreSelectedCommand}" />
-							<Button Content="Clear checked" Command="{Binding ClearSelectedCommand}" />
+						<TextBlock DockPanel.Dock="Top" Text="Files" FontWeight="SemiBold" Margin="0,0,0,8" />
+						<ListBox x:Name="SourceList" ItemsSource="{Binding SourceFiles}" SelectedItem="{Binding SelectedSourceFile}">
+							<ListBox.ItemTemplate>
+								<DataTemplate>
+									<TextBlock Text="{Binding FileName}" />
+								</DataTemplate>
+							</ListBox.ItemTemplate>
+						</ListBox>
+					</DockPanel>
+
+					<DockPanel Grid.Column="1">
+						<StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="0,8,0,0">
+							<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+								<Button Content="Add" Click="AddMapping_Click" />
+								<Button Grid.Column="1" Content="Remove" Command="{Binding RemoveMappingCommand}" />
+							</Grid>
+							<Button Content="Auto Map" HorizontalAlignment="Stretch" Command="{Binding AutoMapCommand}" />
 						</StackPanel>
-						<dg:DataGrid x:Name="MatchGrid"
-						             ItemsSource="{Binding VisibleRows}"
-						             SelectedItem="{Binding SelectedRow}"
-						             SelectionMode="Extended"
+						<TextBlock DockPanel.Dock="Top" Text="Mappings" FontWeight="SemiBold" Margin="0,0,0,8" />
+						<dg:DataGrid ItemsSource="{Binding Mappings}"
+						             SelectedItem="{Binding SelectedMapping}"
 						             AutoGenerateColumns="False"
-						             IsReadOnly="False"
+						             IsReadOnly="True"
 						             GridLinesVisibility="Horizontal"
 						             CanUserReorderColumns="False"
-						             CanUserSortColumns="False">
+						             CanUserSortColumns="False"
+						             HeadersVisibility="Column">
 							<dg:DataGrid.Columns>
-								<dg:DataGridTemplateColumn Header="" Width="44" IsReadOnly="False">
-									<dg:DataGridTemplateColumn.CellTemplate>
-										<DataTemplate>
-											<CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" HorizontalAlignment="Center" />
-										</DataTemplate>
-									</dg:DataGridTemplateColumn.CellTemplate>
-								</dg:DataGridTemplateColumn>
-								<dg:DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="90" IsReadOnly="True" />
-								<dg:DataGridTextColumn Header="File" Binding="{Binding FileName}" Width="2*" IsReadOnly="True" />
-								<dg:DataGridTextColumn Header="Episode" Binding="{Binding EpisodeText}" Width="90" IsReadOnly="True" />
-								<dg:DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*" IsReadOnly="True" />
-								<dg:DataGridTextColumn Header="Proposed" Binding="{Binding ProposedFileName}" Width="2*" IsReadOnly="True" />
+								<dg:DataGridTextColumn Header="File" Binding="{Binding Source}" Width="*" />
+								<dg:DataGridTextColumn Header="Episode" Binding="{Binding Destination}" Width="2*" />
 							</dg:DataGrid.Columns>
 						</dg:DataGrid>
 					</DockPanel>
 
-					<DockPanel Grid.Column="1">
-						<StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
-							<TextBlock Text="Episodes" FontWeight="SemiBold" />
-							<TextBox PlaceholderText="Filter episodes" Text="{Binding EpisodeFilter}" />
-							<WrapPanel Orientation="Horizontal">
-								<Button Content="Check selected" Margin="0,0,8,8" Click="CheckSelectedEpisodes_Click" />
-								<Button Content="Uncheck selected" Margin="0,0,8,8" Click="UncheckSelectedEpisodes_Click" />
-								<Button Content="Uncheck all" Margin="0,0,8,8" Command="{Binding UncheckEpisodesCommand}" />
-							</WrapPanel>
-							<Button Content="Assign checked episodes" Click="UseSelectedEpisodes_Click" HorizontalAlignment="Stretch" />
-							<TextBlock Text="{Binding SelectedMessage}" TextWrapping="Wrap" Opacity="0.8" />
-						</StackPanel>
-						<ListBox x:Name="EpisodeList" ItemsSource="{Binding FilteredEpisodes}" SelectionMode="Multiple">
+					<DockPanel Grid.Column="2">
+						<TextBlock DockPanel.Dock="Top" Text="Episodes" FontWeight="SemiBold" Margin="0,0,0,8" />
+						<TextBox DockPanel.Dock="Top" PlaceholderText="Filter episodes" Text="{Binding EpisodeFilter}" Margin="0,0,0,8" />
+						<ListBox x:Name="DestinationList" ItemsSource="{Binding DestinationEpisodes}" SelectionMode="Multiple">
 							<ListBox.ItemTemplate>
 								<DataTemplate>
-									<CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}" Content="{Binding Label}" />
+									<TextBlock Text="{Binding Label}" />
 								</DataTemplate>
 							</ListBox.ItemTemplate>
 						</ListBox>
@@ -253,18 +242,17 @@
 					</ItemsControl>
 				</StackPanel>
 				<TextBlock Grid.Row="1" Opacity="0.7" TextWrapping="Wrap"
-				           Text="High-confidence matches can be renamed after you confirm. Medium, low, and unmatched files have to be fixed or ignored first. Files are renamed inside their current folder." />
-				<ListBox Grid.Row="2" ItemsSource="{Binding VisibleRows}">
+				           Text="Only mapped files are renamed. Files still in the Files list are left alone. Remove a mapping first if the episode is wrong." />
+				<ListBox Grid.Row="2" ItemsSource="{Binding Mappings}">
 					<ListBox.ItemTemplate>
 						<DataTemplate>
 							<StackPanel Margin="0,4">
 								<Grid ColumnDefinitions="*,Auto,*">
-									<TextBlock Text="{Binding FileName}" TextWrapping="Wrap" />
+									<TextBlock Text="{Binding Source}" TextWrapping="Wrap" />
 									<TextBlock Grid.Column="1" Text="→" Margin="12,0" Opacity="0.6" />
-									<TextBlock Grid.Column="2" Text="{Binding ProposedFileName}" TextWrapping="Wrap" />
+									<TextBlock Grid.Column="2" Text="{Binding Proposed}" TextWrapping="Wrap" />
 								</Grid>
-								<TextBlock Text="{Binding StatusText}" Opacity="0.7" />
-								<TextBlock Text="{Binding Messages}" TextWrapping="Wrap" IsVisible="{Binding HasMessages}" />
+								<TextBlock Text="{Binding Destination}" Opacity="0.7" TextWrapping="Wrap" />
 							</StackPanel>
 						</DataTemplate>
 					</ListBox.ItemTemplate>

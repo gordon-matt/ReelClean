@@ -28,46 +28,15 @@ public partial class MainWindow : Window
         }
     }
 
-    private void UseSelectedEpisodes_Click(object? sender, RoutedEventArgs e)
+    private void AddMapping_Click(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not MainWindowViewModel viewModel)
         {
             return;
         }
 
-        viewModel.AssignEpisodes(SelectedEpisodes(), SelectedFiles());
-    }
-
-    private void CheckSelectedEpisodes_Click(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is MainWindowViewModel viewModel)
-        {
-            viewModel.CheckEpisodes(SelectedEpisodes(), check: true);
-        }
-    }
-
-    private void UncheckSelectedEpisodes_Click(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is MainWindowViewModel viewModel)
-        {
-            viewModel.CheckEpisodes(SelectedEpisodes(), check: false);
-        }
-    }
-
-    private void CheckSelectedFiles_Click(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is MainWindowViewModel viewModel)
-        {
-            viewModel.CheckFiles(SelectedFiles(), check: true);
-        }
-    }
-
-    private void UncheckSelectedFiles_Click(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is MainWindowViewModel viewModel)
-        {
-            viewModel.CheckFiles(SelectedFiles(), check: false);
-        }
+        var episodes = DestinationList.SelectedItems?.OfType<EpisodeChoice>().Select(choice => choice.Episode).ToList() ?? [];
+        viewModel.AddMapping(SourceList.SelectedItem as VideoFile, episodes);
     }
 
     private void Token_Click(object? sender, RoutedEventArgs e)
@@ -83,9 +52,4 @@ public partial class MainWindow : Window
         CustomTemplateBox.Focus();
     }
 
-    private List<EpisodeChoice> SelectedEpisodes() =>
-        EpisodeList.SelectedItems?.OfType<EpisodeChoice>().ToList() ?? [];
-
-    private List<MatchRow> SelectedFiles() =>
-        MatchGrid.SelectedItems?.OfType<MatchRow>().ToList() ?? [];
 }

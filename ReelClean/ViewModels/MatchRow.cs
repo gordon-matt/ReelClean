@@ -3,117 +3,52 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ReelClean.ViewModels;
 
-public sealed class MatchRow : ObservableObject
+public sealed partial class MappingRow : ObservableObject
 {
-    private string _proposedFileName = string.Empty;
-    private PlanStatus _status;
-    private string _messages = string.Empty;
-    private bool _isChecked;
-
-    public MatchRow(EpisodeMatch match)
+    public MappingRow(EpisodeMatch match)
     {
         Match = match;
+        Destination = Describe(match);
     }
 
     public EpisodeMatch Match { get; private set; }
 
-    public string FileName => Match.File.FileName;
+    public string Source => Match.File.FileName;
 
-    public string SeasonText => Match.Episodes.Count > 0
-        ? Match.Episodes[0].SeasonNumber.ToString("00")
-        : Match.Parsed.SeasonNumber?.ToString("00") ?? string.Empty;
+    public string Destination { get; private set; }
 
-    public string EpisodeText
+    public string Confidence => Match.Confidence.ToString();
+
+    [ObservableProperty]
+    public partial string Proposed { get; set; } = string.Empty;
+
+    public void Apply(RenameOperation operation)
     {
-        get
+        Match = operation.Match;
+        Destination = Describe(operation.Match);
+        Proposed = operation.ProposedFileName;
+        OnPropertyChanged(nameof(Source));
+        OnPropertyChanged(nameof(Destination));
+        OnPropertyChanged(nameof(Confidence));
+    }
+
+    private static string Describe(EpisodeMatch match)
+    {
+        var episodes = match.Episodes.OrderBy(episode => episode.SeasonNumber).ThenBy(episode => episode.EpisodeNumber).ToList();
+        if (episodes.Count == 0)
         {
-            var numbers = Match.Episodes.Count > 0
-                ? Match.Episodes.Select(episode => episode.EpisodeNumber).ToList()
-                : Match.Parsed.EpisodeNumbers.ToList();
-            if (numbers.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            var ordered = numbers.Order().ToList();
-            if (ordered.Count == 1)
-            {
-                return ordered[0].ToString("00");
-            }
-
-            bool contiguous = ordered[^1] - ordered[0] == ordered.Count - 1;
-            return contiguous
-                ? $"{ordered[0]:00}-E{ordered[^1]:00}"
-                : string.Join('+', ordered.Select(number => number.ToString("00")));
+            return string.Empty;
         }
-    }
 
-    public string Title => Match.Episodes.Count > 0
-        ? string.Join(" + ", Match.Episodes.Select(episode => episode.Name))
-        : Match.Parsed.DetectedEpisodeTitle ?? string.Empty;
-
-    public string ConfidenceText => Match.Status == MatchStatus.Ignored ? string.Empty : Match.Confidence.ToString();
-
-    public string StatusText => Status switch
-    {
-        PlanStatus.Ready => "Ready",
-        PlanStatus.NeedsReview => "Review",
-        PlanStatus.Invalid => "Invalid",
-        PlanStatus.Ignored => "Ignored",
-        _ => Status.ToString(),
-    };
-
-    public string ProposedFileName
-    {
-        get => _proposedFileName;
-        private set => SetProperty(ref _proposedFileName, value);
-    }
-
-    public PlanStatus Status
-    {
-        get => _status;
-        private set
-        {
-            if (SetProperty(ref _status, value))
-            {
-                OnPropertyChanged(nameof(StatusText));
-            }
-        }
-    }
-
-    public string Messages
-    {
-        get => _messages;
-        private set
-        {
-            if (SetProperty(ref _messages, value))
-            {
-                OnPropertyChanged(nameof(HasMessages));
-            }
-        }
-    }
-
-    public bool HasMessages => Messages.Length > 0;
-
-    public bool IsChecked
-    {
-        get => _isChecked;
-        set => SetProperty(ref _isChecked, value);
-    }
-
-    public void SetMatch(EpisodeMatch match) => Match = match;
-
-    public void Update(EpisodeMatch match, RenameOperation operation)
-    {
-        Match = match;
-        ProposedFileName = operation.ProposedFileName;
-        Status = operation.Status;
-        Messages = string.Join(" ", operation.Messages);
-        OnPropertyChanged(nameof(FileName));
-        OnPropertyChanged(nameof(SeasonText));
-        OnPropertyChanged(nameof(EpisodeText));
-        OnPropertyChanged(nameof(Title));
-        OnPropertyChanged(nameof(ConfidenceText));
+        bool contiguous = episodes.Count == 1
+            || (episodes[^1].EpisodeNumber - episodes[0].EpisodeNumber == episodes.Count - 1
+                && episodes.All(episode => episode.SeasonNumber == episodes[0].SeasonNumber));
+        string numbers = episodes.Count == 1
+            ? $"S{episodes[0].SeasonNumber:00}E{episodes[0].EpisodeNumber:00}"
+            : contiguous
+                ? $"S{episodes[0].SeasonNumber:00}E{episodes[0].EpisodeNumber:00}-E{episodes[^1].EpisodeNumber:00}"
+                : string.Join(", ", episodes.Select(episode => $"S{episode.SeasonNumber:00}E{episode.EpisodeNumber:00}"));
+        return $"{numbers}  {string.Join(" + ", episodes.Select(episode => episode.Name))}";
     }
 }
 
@@ -147,7 +82,4 @@ public sealed partial class EpisodeChoice : ObservableObject
     public TvEpisode Episode { get; }
 
     public string Label { get; }
-
-    [ObservableProperty]
-    public partial bool IsChecked { get; set; }
 }
