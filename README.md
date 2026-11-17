@@ -1,6 +1,6 @@
 <img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Logo_Small.png" alt="Logo" width="350" />
 
-ReelClean is a cross-platform desktop app for one TV folder at a time. It reads episode numbers from filenames, matches them to [TMDB](https://www.themoviedb.org/), shows a rename preview, and only then renames files.
+ReelClean is a cross-platform desktop app for renaming one folder of TV shows at a time. It reads episode numbers from filenames, matches them to [TMDB](https://www.themoviedb.org/), shows a rename preview, and only then renames files.
 
 This product uses the TMDB API but is not endorsed or certified by TMDB.
 
