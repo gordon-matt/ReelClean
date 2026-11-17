@@ -20,9 +20,7 @@ This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 ## TMDB key
 
-Create a v3 API key at themoviedb.org, open Settings from the top bar, paste the key in, and click Save.
-
-Save writes `%AppData%\ReelClean\settings.json` on Windows, and the equivalent application-data folder on macOS and Linux. That folder is outside this repository, so the key is not committed. `appsettings.json` is for logging and other app configuration, and it does not contain a TMDB key. A gitignored `appsettings.Local.json`, or the `Tmdb__ApiKey` environment variable, can supply the key before the first save. After you click Save, the app-data file is the one the app uses.
+Create a v3 API key at themoviedb.org, open Settings from the top bar, paste the key in, and click Save. Save writes `%AppData%\ReelClean\settings.json` on Windows, and the equivalent application-data folder on macOS and Linux.
 
 The rename template, including a custom pattern, is saved in that same user-profile file when you change it.
 
@@ -32,7 +30,7 @@ The client calls `https://api.themoviedb.org/3/` with the `api_key` query parame
 
 Published releases are on the [GitHub releases page](https://github.com/gordon-matt/ReelClean/releases).
 
-Unzip the download and run `ReelClean` (`ReelClean.exe` on Windows). macOS may warn that the app is from an unidentified developer until it is code-signed and notarised. Linux may ask for system libraries such as fontconfig, depending on the distribution.
+Unzip the download and run `ReelClean` (`ReelClean.exe` on Windows). macOS may warn that the app is from an unidentified developer until it is code-signed and notarized. Linux may ask for system libraries such as fontconfig, depending on the distribution.
 
 Scanning does not rename anything. High-confidence matches can be renamed after you confirm the preview. Medium, low, and unmatched files have to be assigned or ignored first. Renames stay inside the file's current folder. A history file under the ReelClean application-data folder supports undo when the new files are still in place and the original paths are free.
 
