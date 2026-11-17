@@ -4,12 +4,16 @@ Your media, properly named.
 
 ## Screenshots
 
+### Step 1: Select Folder
 <img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Screenshots/01_Folder.JPG" alt="Step 1 - Select Folder" />
 
+### Step 2: Select Series
 <img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Screenshots/02_Series.JPG" alt="Step 2 - Select Series" />
 
+### Step 3: Match
 <img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Screenshots/03_Match.JPG" alt="Step 3 - Match" />
 
+### Step 4: Rename
 <img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Screenshots/04_Rename.JPG" alt="Step 4 - Rename" />
 
 ReelClean is a cross-platform desktop app for one TV folder at a time. It reads episode numbers from filenames, matches them to [TMDB](https://www.themoviedb.org/), shows a rename preview, and only then renames files.
