@@ -31,86 +31,49 @@
 		</DataTemplate>
 	</Window.Resources>
 
-	<Grid RowDefinitions="32,*" ColumnDefinitions="288,*">
-		<Border Grid.ColumnSpan="2" Background="{DynamicResource Brush.App}" IsHitTestVisible="False" />
-		<Border Grid.Row="1" Grid.Column="0" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0" Padding="18,20,18,16">
-			<Border.Background>
-				<LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
-					<GradientStop Color="#182338" Offset="0" />
-					<GradientStop Color="#151D2E" Offset="0.42" />
-					<GradientStop Color="#12192A" Offset="1" />
-				</LinearGradientBrush>
-			</Border.Background>
-			<DockPanel>
-				<StackPanel DockPanel.Dock="Top" Spacing="8" Margin="2,0,2,22">
-					<Image Source="avares://ReelClean/Assets/Logo.png"
-					       Height="78"
-					       Stretch="Uniform"
-					       HorizontalAlignment="Center"
-					       AutomationProperties.Name="ReelClean"
-					       RenderOptions.BitmapInterpolationMode="HighQuality" />
-					<Border Height="3" CornerRadius="2" Margin="10,2,10,0">
-						<Border.Background>
-							<LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
-								<GradientStop Color="#F5A24A" Offset="0" />
-								<GradientStop Color="#528BFF" Offset="0.55" />
-								<GradientStop Color="#35C6D9" Offset="1" />
-							</LinearGradientBrush>
-						</Border.Background>
-					</Border>
-					<TextBlock Classes="caption" Text="Your media, properly named." HorizontalAlignment="Center" TextAlignment="Center" />
+	<Grid RowDefinitions="32,Auto,*">
+		<Border Background="{DynamicResource Brush.App}" IsHitTestVisible="False" />
+		<Border Grid.Row="1" Padding="20,8" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,0,1" Background="{DynamicResource Brush.Sidebar}">
+			<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+				<Image Source="avares://ReelClean/Assets/Logo.png"
+				       Height="44"
+				       Stretch="Uniform"
+				       VerticalAlignment="Center"
+				       AutomationProperties.Name="ReelClean"
+				       RenderOptions.BitmapInterpolationMode="HighQuality" />
+				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+					<Button Classes="nav" Classes.active="{Binding IsFolderStep}" Command="{Binding NavigateCommand}" CommandParameter="0" HorizontalAlignment="Left">
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<PathIcon Data="{StaticResource Icon.Folder}" VerticalAlignment="Center" />
+							<TextBlock Text="Folder" VerticalAlignment="Center" />
+						</StackPanel>
+					</Button>
+					<Button Classes="nav" Classes.active="{Binding IsSeriesStep}" Command="{Binding NavigateCommand}" CommandParameter="1" HorizontalAlignment="Left">
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<PathIcon Data="{StaticResource Icon.Series}" VerticalAlignment="Center" />
+							<TextBlock Text="Series" VerticalAlignment="Center" />
+						</StackPanel>
+					</Button>
+					<Button Classes="nav" Classes.active="{Binding IsMatchStep}" Command="{Binding NavigateCommand}" CommandParameter="2" HorizontalAlignment="Left">
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<PathIcon Data="{StaticResource Icon.Match}" VerticalAlignment="Center" />
+							<TextBlock Text="Match" VerticalAlignment="Center" />
+						</StackPanel>
+					</Button>
+					<Button Classes="nav" Classes.active="{Binding IsRenameStep}" Command="{Binding NavigateCommand}" CommandParameter="3" HorizontalAlignment="Left">
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<PathIcon Data="{StaticResource Icon.Rename}" VerticalAlignment="Center" />
+							<TextBlock Text="Rename" VerticalAlignment="Center" />
+						</StackPanel>
+					</Button>
 				</StackPanel>
-
-				<StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="4,16,4,0">
-					<TextBlock Classes="kicker" Text="TMDB API KEY" Margin="4,0,0,0" />
-					<TextBox PlaceholderText="Paste API key" PasswordChar="•" Text="{Binding ApiKey}" />
-					<Button Classes="accent" Content="Save" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding SaveSettingsCommand}" />
-					<TextBlock Classes="caption" Text="Saved in your user profile, outside this project." />
-					<TextBlock Classes="caption" Text="Metadata from TMDB. Not endorsed by TMDB." Margin="0,6,0,0" />
-				</StackPanel>
-
-				<ScrollViewer HorizontalScrollBarVisibility="Disabled">
-					<StackPanel Spacing="4" Margin="0,0,0,8">
-						<TextBlock Classes="kicker" Text="WORKFLOW" Margin="14,0,0,8" />
-
-						<Button Classes="nav" Classes.active="{Binding IsFolderStep}" Command="{Binding NavigateCommand}" CommandParameter="0">
-							<Grid ColumnDefinitions="4,22,*,Auto" ColumnSpacing="8">
-								<Border Classes="navMark" HorizontalAlignment="Left" VerticalAlignment="Center" />
-								<PathIcon Grid.Column="1" Data="{StaticResource Icon.Folder}" VerticalAlignment="Center" />
-								<TextBlock Grid.Column="2" Text="Folder" VerticalAlignment="Center" />
-								<TextBlock Grid.Column="3" Classes="navIndex" Text="01" VerticalAlignment="Center" />
-							</Grid>
-						</Button>
-						<Button Classes="nav" Classes.active="{Binding IsSeriesStep}" Command="{Binding NavigateCommand}" CommandParameter="1">
-							<Grid ColumnDefinitions="4,22,*,Auto" ColumnSpacing="8">
-								<Border Classes="navMark" HorizontalAlignment="Left" VerticalAlignment="Center" />
-								<PathIcon Grid.Column="1" Data="{StaticResource Icon.Series}" VerticalAlignment="Center" />
-								<TextBlock Grid.Column="2" Text="Series" VerticalAlignment="Center" />
-								<TextBlock Grid.Column="3" Classes="navIndex" Text="02" VerticalAlignment="Center" />
-							</Grid>
-						</Button>
-						<Button Classes="nav" Classes.active="{Binding IsMatchStep}" Command="{Binding NavigateCommand}" CommandParameter="2">
-							<Grid ColumnDefinitions="4,22,*,Auto" ColumnSpacing="8">
-								<Border Classes="navMark" HorizontalAlignment="Left" VerticalAlignment="Center" />
-								<PathIcon Grid.Column="1" Data="{StaticResource Icon.Match}" VerticalAlignment="Center" />
-								<TextBlock Grid.Column="2" Text="Match" VerticalAlignment="Center" />
-								<TextBlock Grid.Column="3" Classes="navIndex" Text="03" VerticalAlignment="Center" />
-							</Grid>
-						</Button>
-						<Button Classes="nav" Classes.active="{Binding IsRenameStep}" Command="{Binding NavigateCommand}" CommandParameter="3">
-							<Grid ColumnDefinitions="4,22,*,Auto" ColumnSpacing="8">
-								<Border Classes="navMark" HorizontalAlignment="Left" VerticalAlignment="Center" />
-								<PathIcon Grid.Column="1" Data="{StaticResource Icon.Rename}" VerticalAlignment="Center" />
-								<TextBlock Grid.Column="2" Text="Rename" VerticalAlignment="Center" />
-								<TextBlock Grid.Column="3" Classes="navIndex" Text="04" VerticalAlignment="Center" />
-							</Grid>
-						</Button>
-					</StackPanel>
-				</ScrollViewer>
-			</DockPanel>
+				<Button Grid.Column="2" Classes="icon" ToolTip.Tip="Settings" AutomationProperties.Name="Settings" Click="Settings_Click" VerticalAlignment="Center">
+					<PathIcon Data="{StaticResource Icon.Settings}" />
+				</Button>
+			</Grid>
 		</Border>
 
-		<Grid Grid.Row="1" Grid.Column="1" RowDefinitions="*,Auto">
+		<Grid Grid.Row="2" RowDefinitions="*,Auto">
 			<Grid Margin="28,22,28,16">
 				<Grid IsVisible="{Binding IsFolderStep}" RowDefinitions="Auto,Auto,*" RowSpacing="16">
 					<StackPanel Spacing="6">
@@ -258,7 +221,7 @@
 						</Grid>
 					</Border>
 
-					<Grid Grid.Row="2" ColumnDefinitions="*,1.15*,*" ColumnSpacing="14">
+					<Grid Grid.Row="2" ColumnDefinitions="3*,5*,2*" ColumnSpacing="14">
 						<Border Classes="card dense">
 							<DockPanel>
 								<TextBlock DockPanel.Dock="Top" Classes="sectionTitle" Text="Files" Margin="6,2,6,10" />
@@ -288,6 +251,7 @@
 								             SelectedItem="{Binding SelectedMapping}"
 								             AutoGenerateColumns="False"
 								             IsReadOnly="True"
+								             RowHeight="NaN"
 								             CanUserReorderColumns="False"
 								             CanUserSortColumns="False"
 								             HeadersVisibility="Column">
@@ -295,21 +259,14 @@
 										<dg:DataGridTemplateColumn Header="File" Width="*">
 											<dg:DataGridTemplateColumn.CellTemplate>
 												<DataTemplate>
-													<TextBlock Classes="trim" Text="{Binding Source}" ToolTip.Tip="{Binding Match.File.FullPath}" />
+													<TextBlock Text="{Binding Source}" TextWrapping="Wrap" ToolTip.Tip="{Binding Match.File.FullPath}" />
 												</DataTemplate>
 											</dg:DataGridTemplateColumn.CellTemplate>
 										</dg:DataGridTemplateColumn>
-										<dg:DataGridTemplateColumn Header="Match" Width="118">
+										<dg:DataGridTemplateColumn Header="Episode" Width="*">
 											<dg:DataGridTemplateColumn.CellTemplate>
 												<DataTemplate>
-													<ContentControl Content="{Binding}" ContentTemplate="{StaticResource ConfidenceBadge}" VerticalAlignment="Center" />
-												</DataTemplate>
-											</dg:DataGridTemplateColumn.CellTemplate>
-										</dg:DataGridTemplateColumn>
-										<dg:DataGridTemplateColumn Header="Episode" Width="2*">
-											<dg:DataGridTemplateColumn.CellTemplate>
-												<DataTemplate>
-													<TextBlock Classes="trim" Text="{Binding Destination}" ToolTip.Tip="{Binding Destination}" />
+													<TextBlock Text="{Binding Destination}" TextWrapping="Wrap" ToolTip.Tip="{Binding Destination}" />
 												</DataTemplate>
 											</dg:DataGridTemplateColumn.CellTemplate>
 										</dg:DataGridTemplateColumn>
@@ -434,6 +391,30 @@
 						<Button Classes="accent" Content="Next" MinWidth="112" Command="{Binding NextCommand}" />
 					</StackPanel>
 				</Grid>
+			</Border>
+		</Grid>
+
+		<Grid x:Name="SettingsLayer" Grid.Row="1" Grid.RowSpan="2" IsVisible="False" ZIndex="4">
+			<Border Background="#B3101522" PointerPressed="SettingsScrim_PointerPressed" />
+			<Border Width="400" HorizontalAlignment="Right" Background="{DynamicResource Brush.Sidebar}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1,0,0,0" Padding="24,20">
+				<DockPanel>
+					<Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,8,0,20">
+						<StackPanel Spacing="4" VerticalAlignment="Center">
+							<TextBlock Classes="sectionTitle" Text="Settings" />
+							<TextBlock Classes="caption" Text="Your media, properly named." />
+						</StackPanel>
+						<Button Grid.Column="1" Classes="icon" ToolTip.Tip="Close" AutomationProperties.Name="Close settings" Click="CloseSettings_Click">
+							<PathIcon Data="{StaticResource Icon.Close}" />
+						</Button>
+					</Grid>
+					<StackPanel Spacing="12">
+						<TextBlock Classes="kicker" Text="TMDB API KEY" />
+						<TextBox PlaceholderText="Paste API key" PasswordChar="•" Text="{Binding ApiKey}" />
+						<Button Classes="accent" Content="Save" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding SaveSettingsCommand}" />
+						<TextBlock Classes="caption" Text="Saved in your user profile, outside this project." />
+						<TextBlock Classes="caption" Text="Metadata from TMDB. Not endorsed by TMDB." Margin="0,8,0,0" />
+					</StackPanel>
+				</DockPanel>
 			</Border>
 		</Grid>
 	</Grid>

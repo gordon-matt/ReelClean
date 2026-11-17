@@ -565,7 +565,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         StatusMessage = guessed is null
             ? FileSummary + " Choose Next to pick the series."
-            : $"Suggested \"{guessed}\" in the series search. Choose Next, then press Search when it looks right.";
+            : FileSummary + " Series search filled in.";
         if (_selectedSeries is null)
         {
             ClearMatches();

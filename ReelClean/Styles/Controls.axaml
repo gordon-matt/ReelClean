@@ -254,6 +254,41 @@
 		<Setter Property="Foreground" Value="{DynamicResource Brush.Accent}" />
 	</Style>
 
+	<Style Selector="Button.icon">
+		<Setter Property="Width" Value="40" />
+		<Setter Property="Height" Value="40" />
+		<Setter Property="MinWidth" Value="40" />
+		<Setter Property="MinHeight" Value="40" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="HorizontalContentAlignment" Value="Center" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+	</Style>
+
+	<Style Selector="Button.icon /template/ ContentPresenter#PART_ContentPresenter">
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="BorderBrush" Value="Transparent" />
+	</Style>
+
+	<Style Selector="Button.icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+		<Setter Property="Background" Value="{DynamicResource Brush.Elevated}" />
+	</Style>
+
+	<Style Selector="Button.icon:pressed /template/ ContentPresenter#PART_ContentPresenter">
+		<Setter Property="Background" Value="{DynamicResource Brush.AccentSoft}" />
+	</Style>
+
+	<Style Selector="Button.icon PathIcon">
+		<Setter Property="Width" Value="18" />
+		<Setter Property="Height" Value="18" />
+		<Setter Property="Foreground" Value="{DynamicResource Brush.TextMuted}" />
+	</Style>
+
+	<Style Selector="Button.icon:pointerover PathIcon">
+		<Setter Property="Foreground" Value="{DynamicResource Brush.Text}" />
+	</Style>
+
 	<Style Selector="Button.nav TextBlock.navIndex">
 		<Setter Property="FontSize" Value="12" />
 		<Setter Property="FontWeight" Value="SemiBold" />

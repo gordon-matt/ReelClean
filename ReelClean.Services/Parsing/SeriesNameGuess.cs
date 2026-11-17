@@ -4,7 +4,7 @@ namespace ReelClean.Services.Parsing;
 
 /// <summary>
 /// Suggests a TMDB search from a folder name or the text before an episode marker.
-/// Returns null when nothing reliable is there.
+/// Release tags, years, and season labels are left out so the query is just the series name.
 /// </summary>
 public static partial class SeriesNameGuess
 {
@@ -15,54 +15,40 @@ public static partial class SeriesNameGuess
         "media", "unsorted", "incoming", "shows", "series",
     };
 
-    private static readonly HashSet<string> JunkTokens = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> ReleaseTokens = new(StringComparer.OrdinalIgnoreCase)
     {
-        "480p", "576p", "720p", "1080p", "2160p", "4k", "x264", "x265", "h264", "h265",
-        "hevc", "web", "webrip", "web-dl", "webdl", "bluray", "blu-ray", "hdtv", "dvdrip",
-        "proper", "repack", "rerip", "season", "seasons", "specials", "extras", "bonus",
-        "complete", "multi",
+        "480p", "576p", "720p", "1080p", "2160p", "4k", "8k",
+        "x264", "x265", "h264", "h265", "hevc", "xvid", "divx", "av1",
+        "web", "webrip", "webdl", "bluray", "bdrip", "brrip", "hdtv", "hdrip",
+        "dvd", "dvdrip", "pdtv", "dsr", "remux", "hdr", "sdr", "10bit", "8bit",
+        "aac", "ac3", "eac3", "dts", "truehd", "atmos", "flac", "dd", "ddp",
+        "proper", "repack", "rerip", "internal", "limited", "extended", "unrated", "remastered",
+        "season", "seasons", "specials", "extras", "bonus", "complete", "multi", "custom",
+        "dl", "pack", "batch", "sample", "nfo", "readnfo", "sub", "subs", "dub", "dubbed", "subbed",
+        "amzn", "nf", "dsnp", "hmax", "hulu", "atvp", "itunes",
+    };
+
+    private static readonly HashSet<string> CountryTags = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "us", "uk", "au", "nz", "ca",
     };
 
     public static string? FromFolderAndFiles(string? folderPath, IReadOnlyList<string> filePaths)
     {
-        var names = new List<string>();
+        var fromFiles = filePaths
+            .Select(path => FromFileName(Path.GetFileName(path)))
+            .OfType<string>()
+            .ToList();
+        string? fileTitle = CommonTitle(fromFiles);
+
+        string? folderTitle = null;
         foreach (string path in filePaths)
         {
-            string? fromFile = FromFileName(Path.GetFileName(path));
-            if (fromFile is not null)
-            {
-                names.Add(fromFile);
-            }
-
-            string? fromDirectory = FromDirectory(Path.GetDirectoryName(path), folderPath);
-            if (fromDirectory is not null)
-            {
-                names.Add(fromDirectory);
-            }
+            folderTitle ??= FromDirectory(Path.GetDirectoryName(path), folderPath);
         }
 
-        if (!string.IsNullOrWhiteSpace(folderPath))
-        {
-            string? fromRoot = FromDirectory(folderPath, folderPath);
-            if (fromRoot is not null)
-            {
-                names.Add(fromRoot);
-            }
-        }
-
-        if (names.Count == 0)
-        {
-            return null;
-        }
-
-        var best = names
-            .GroupBy(name => name, StringComparer.OrdinalIgnoreCase)
-            .OrderByDescending(group => group.Count())
-            .ThenByDescending(group => group.Key.Length)
-            .First();
-
-        bool confident = best.Count() >= 2 || names.Count == 1;
-        return confident ? best.First() : null;
+        folderTitle ??= FromDirectory(folderPath, folderPath);
+        return Choose(folderTitle, fileTitle);
     }
 
     public static string? FromFileName(string? fileName)
@@ -80,6 +66,69 @@ public static partial class SeriesNameGuess
         }
 
         return Clean(stem[..marker.Index]);
+    }
+
+    private static string? Choose(string? folderTitle, string? fileTitle)
+    {
+        if (folderTitle is null)
+        {
+            return fileTitle;
+        }
+
+        if (fileTitle is null)
+        {
+            return folderTitle;
+        }
+
+        if (StartsWithWords(fileTitle, folderTitle))
+        {
+            return folderTitle;
+        }
+
+        if (StartsWithWords(folderTitle, fileTitle))
+        {
+            return fileTitle;
+        }
+
+        return folderTitle;
+    }
+
+    private static string? CommonTitle(IReadOnlyList<string> titles)
+    {
+        if (titles.Count == 0)
+        {
+            return null;
+        }
+
+        var words = titles.Select(title => title.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToList();
+        int shared = 0;
+        int limit = words.Min(title => title.Length);
+        while (shared < limit && words.All(title => title[shared].Equals(words[0][shared], StringComparison.OrdinalIgnoreCase)))
+        {
+            shared++;
+        }
+
+        return shared == 0 ? null : string.Join(' ', words[0].Take(shared));
+    }
+
+    private static bool StartsWithWords(string text, string prefix)
+    {
+        string[] textWords = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string[] prefixWords = prefix.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (prefixWords.Length > textWords.Length)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < prefixWords.Length; i++)
+        {
+            if (!textWords[i].Equals(prefixWords[i], StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static string? FromDirectory(string? directory, string? stopAt)
@@ -131,31 +180,37 @@ public static partial class SeriesNameGuess
         var tokens = new List<string>();
         foreach (string token in spaced.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            string trimmed = token.Trim('(', ')', '[', ']', '{', '}');
+            string trimmed = token.Trim('(', ')', '[', ']', '{', '}', '\'', '"');
             if (trimmed.Length > 0)
             {
                 tokens.Add(trimmed);
             }
         }
 
-        while (tokens.Count > 0 && IsJunk(tokens[^1]))
+        int release = tokens.FindIndex(IsReleaseToken);
+        if (release > 0)
+        {
+            tokens.RemoveRange(release, tokens.Count - release);
+        }
+
+        while (tokens.Count > 0 && IsReleaseToken(tokens[^1]))
         {
             tokens.RemoveAt(tokens.Count - 1);
         }
 
-        if (tokens.Count == 0)
+        if (tokens.Count > 1 && CountryTags.Contains(tokens[^1]))
         {
-            return null;
+            tokens.RemoveAt(tokens.Count - 1);
         }
 
-        return string.Join(' ', tokens);
+        return tokens.Count == 0 ? null : string.Join(' ', tokens);
     }
 
-    private static bool IsJunk(string token) =>
-        JunkTokens.Contains(token)
+    private static bool IsReleaseToken(string token) =>
+        ReleaseTokens.Contains(token)
         || YearOrResolution().IsMatch(token)
         || EpisodeToken().IsMatch(token)
-        || token.All(char.IsDigit);
+        || AudioToken().IsMatch(token);
 
     [GeneratedRegex(@"(?i)(?<![A-Za-z0-9])(?:S\d{1,2}[\s._-]*E\d{1,3}|\d{1,2}x\d{2})", RegexOptions.CultureInvariant)]
     private static partial Regex EpisodeMarker();
@@ -168,4 +223,7 @@ public static partial class SeriesNameGuess
 
     [GeneratedRegex(@"^[se]\d{1,3}$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex EpisodeToken();
+
+    [GeneratedRegex(@"^(dd|ddp|aac)?\d\.\d$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex AudioToken();
 }

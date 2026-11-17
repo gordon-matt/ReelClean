@@ -8,7 +8,8 @@ public class SeriesNameGuessTests
     public void FromFileName_ReadsTheTitleBeforeTheEpisodeMarker()
     {
         Assert.Equal("The Office", SeriesNameGuess.FromFileName("The.Office.S03E04.Grief.Counseling.mkv"));
-        Assert.Equal("The Office US", SeriesNameGuess.FromFileName("The.Office.US.1x02.mkv"));
+        Assert.Equal("The Office", SeriesNameGuess.FromFileName("The.Office.US.1080p.WEB-DL.x264-GROUP.S03E04.mkv"));
+        Assert.Equal("The 100", SeriesNameGuess.FromFileName("The.100.S01E01.720p.mkv"));
     }
 
     [Fact]
@@ -47,5 +48,27 @@ public class SeriesNameGuessTests
         ];
 
         Assert.Null(SeriesNameGuess.FromFolderAndFiles(folder, files));
+    }
+
+    [Fact]
+    public void FromFolderAndFiles_PrefersTheShortFolderNameOverReleaseText()
+    {
+        string folder = Path.Combine("D:", "TV", "The Office Season 3 1080p BluRay");
+        string file = Path.Combine(folder, "The.Office.US.2020.S03E04.1080p.WEB-DL.mkv");
+
+        Assert.Equal("The Office", SeriesNameGuess.FromFolderAndFiles(folder, [file]));
+    }
+
+    [Fact]
+    public void FromFolderAndFiles_UsesTheWordsEveryFileShares()
+    {
+        string folder = Path.Combine("D:", "Downloads");
+        string[] files =
+        [
+            Path.Combine(folder, "The.Office.US.S01E01.1080p.mkv"),
+            Path.Combine(folder, "The.Office.UK.S01E01.720p.mkv"),
+        ];
+
+        Assert.Equal("The Office", SeriesNameGuess.FromFolderAndFiles(folder, files));
     }
 }

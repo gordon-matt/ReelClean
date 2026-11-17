@@ -49,6 +49,21 @@ public partial class MainWindow : Window
         viewModel.AddMapping(SourceList.SelectedItem as VideoFile, episodes);
     }
 
+    private void Settings_Click(object? sender, RoutedEventArgs e)
+    {
+        SettingsLayer.IsVisible = true;
+    }
+
+    private void CloseSettings_Click(object? sender, RoutedEventArgs e)
+    {
+        SettingsLayer.IsVisible = false;
+    }
+
+    private void SettingsScrim_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        SettingsLayer.IsVisible = false;
+    }
+
     private void Token_Click(object? sender, RoutedEventArgs e)
     {
         if (sender is not Button { Tag: string token } || DataContext is not MainWindowViewModel viewModel)
