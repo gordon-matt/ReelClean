@@ -4,260 +4,439 @@
         xmlns:dg="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
         x:Class="ReelClean.Views.MainWindow"
         Title="ReelClean"
-        Width="1180"
-        Height="800"
-        MinWidth="900"
-        MinHeight="640">
-	<Window.Styles>
-		<Style Selector="Button.poster">
-			<Setter Property="Background" Value="Transparent" />
-			<Setter Property="Padding" Value="6" />
-			<Setter Property="BorderThickness" Value="0" />
-		</Style>
-		<Style Selector="Border.cover">
-			<Setter Property="BorderBrush" Value="Transparent" />
-		</Style>
-		<Style Selector="Border.cover.selected">
-			<Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}" />
-		</Style>
-	</Window.Styles>
-
-	<DockPanel>
-		<Border DockPanel.Dock="Top" Padding="20,14" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
-			<Grid ColumnDefinitions="*,Auto">
-				<StackPanel Spacing="2" VerticalAlignment="Center">
-					<TextBlock Text="ReelClean" FontSize="22" FontWeight="SemiBold" />
-					<TextBlock Text="Your media, properly named." Opacity="0.7" />
-				</StackPanel>
-				<StackPanel Grid.Column="1" Spacing="4">
-					<StackPanel Orientation="Horizontal" Spacing="8">
-						<TextBox Width="240" PlaceholderText="TMDB API key" PasswordChar="•" Text="{Binding ApiKey}" />
-						<Button Content="Save" MinWidth="72" Command="{Binding SaveSettingsCommand}" />
-					</StackPanel>
-					<TextBlock Text="Saved in your user profile, outside this project." Opacity="0.65" FontSize="12" HorizontalAlignment="Right" />
-				</StackPanel>
-			</Grid>
-		</Border>
-
-		<Border DockPanel.Dock="Bottom" Padding="20,10" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
-			<Grid ColumnDefinitions="*,Auto,Auto">
-				<TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" TextWrapping="Wrap" />
-				<Button Grid.Column="1" Content="Cancel" Margin="12,0,0,0" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" />
-				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12" Margin="16,0,0,0">
-					<ProgressBar Width="120" IsIndeterminate="True" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
-					<TextBlock Opacity="0.65" VerticalAlignment="Center" Text="Metadata from TMDB. Not endorsed by TMDB." />
-				</StackPanel>
-			</Grid>
-		</Border>
-
-		<Border DockPanel.Dock="Bottom" Padding="20,12" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
-			<Grid ColumnDefinitions="*,Auto">
-				<TextBlock Text="{Binding StepTitle}" VerticalAlignment="Center" FontWeight="SemiBold" />
-				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-					<Button Content="Previous" MinWidth="96" Command="{Binding PreviousCommand}" />
-					<Button Content="Next" MinWidth="96" Command="{Binding NextCommand}" />
-				</StackPanel>
-			</Grid>
-		</Border>
-
-		<Grid Margin="20">
-			<Grid IsVisible="{Binding IsFolderStep}" RowDefinitions="Auto,*">
-				<StackPanel Spacing="8" Margin="0,0,0,12">
-					<Grid ColumnDefinitions="*,Auto,Auto">
-						<TextBox PlaceholderText="Folder containing episodes" Text="{Binding FolderPath}" />
-						<Button Grid.Column="1" Content="Browse" Margin="8,0,0,0" MinWidth="80" Command="{Binding BrowseFolderCommand}" />
-						<Button Grid.Column="2" Content="Scan" Margin="8,0,0,0" MinWidth="80" Command="{Binding ScanCommand}" />
-					</Grid>
-					<StackPanel Orientation="Horizontal" Spacing="16">
-						<CheckBox Content="Include subfolders" IsChecked="{Binding ScanSubdirectories}" />
-						<CheckBox Content="Include hidden files" IsChecked="{Binding IncludeHiddenFiles}" />
-					</StackPanel>
-					<TextBlock Text="{Binding FileSummary}" Opacity="0.75" />
-				</StackPanel>
-				<ListBox Grid.Row="1" ItemsSource="{Binding Files}">
-					<ListBox.ItemTemplate>
-						<DataTemplate>
-							<TextBlock Text="{Binding FileName}" />
-						</DataTemplate>
-					</ListBox.ItemTemplate>
-				</ListBox>
-			</Grid>
-
-			<Grid IsVisible="{Binding IsSeriesStep}" RowDefinitions="Auto,*">
-				<StackPanel Spacing="8" Margin="0,0,0,12">
-					<TextBlock Text="Series" FontWeight="SemiBold" />
-					<Grid ColumnDefinitions="*,Auto">
-						<TextBox PlaceholderText="Search TMDB" Text="{Binding SearchQuery}" KeyDown="SearchQuery_KeyDown" />
-						<Button Grid.Column="1" Content="Search" Margin="8,0,0,0" MinWidth="80" Command="{Binding SearchSeriesCommand}" />
-					</Grid>
-					<TextBlock Text="A title from the folder or filenames is filled in when one can be read. Nothing is searched until you press Search." Opacity="0.7" TextWrapping="Wrap" />
-				</StackPanel>
-				<Grid Grid.Row="1" ColumnDefinitions="*,320" ColumnSpacing="16">
-				<ScrollViewer HorizontalScrollBarVisibility="Disabled">
-					<ItemsControl ItemsSource="{Binding SeriesResults}">
-						<ItemsControl.ItemsPanel>
-							<ItemsPanelTemplate>
-								<WrapPanel />
-							</ItemsPanelTemplate>
-						</ItemsControl.ItemsPanel>
-						<ItemsControl.ItemTemplate>
-							<DataTemplate>
-								<Button Classes="poster" Click="Poster_Click">
-									<StackPanel Width="148" Spacing="6">
-										<Border Classes="cover" Classes.selected="{Binding IsSelected}" Width="148" Height="222" CornerRadius="6" ClipToBounds="True" BorderThickness="3">
-											<Panel>
-												<Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
-													<TextBlock Text="{Binding Label}"
-													           TextWrapping="Wrap"
-													           TextAlignment="Center"
-													           HorizontalAlignment="Center"
-													           VerticalAlignment="Center"
-													           Margin="8"
-													           Opacity="0.75"
-													           IsVisible="{Binding Poster, Converter={x:Static conv:ObjectConverters.IsNull}}" />
-												</Border>
-												<Image Source="{Binding Poster}" Stretch="UniformToFill" />
-											</Panel>
-										</Border>
-										<TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextAlignment="Center" MaxHeight="40" />
-									</StackPanel>
-								</Button>
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-					</ItemsControl>
-				</ScrollViewer>
-				<Border Grid.Column="1" Padding="16" CornerRadius="8" Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
-					<DockPanel>
-						<TextBlock DockPanel.Dock="Top" Text="Details" FontWeight="SemiBold" Margin="0,0,0,12" />
-						<Button DockPanel.Dock="Bottom" Content="Open on TMDB" HorizontalAlignment="Left" Margin="0,12,0,0"
-						        Command="{Binding OpenSeriesOnTmdbCommand}" IsVisible="{Binding HasSeriesDetails}" />
-						<Grid>
-							<ScrollViewer IsVisible="{Binding HasSeriesDetails}">
-								<StackPanel Spacing="10">
-									<Border Width="160" Height="240" CornerRadius="6" ClipToBounds="True" HorizontalAlignment="Left"
-									        IsVisible="{Binding SelectedPoster, Converter={x:Static conv:ObjectConverters.IsNotNull}}">
-										<Image Source="{Binding SelectedPoster}" Stretch="UniformToFill" />
-									</Border>
-									<TextBlock Text="{Binding SelectedSeriesLabel}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" />
-									<TextBlock Text="{Binding SelectedFacts}" Opacity="0.75" />
-									<TextBlock Text="About" FontWeight="SemiBold" />
-									<TextBlock Text="{Binding SelectedOverview}" TextWrapping="Wrap" />
-								</StackPanel>
-							</ScrollViewer>
-							<TextBlock Text="Select a cover to see the year and description." Opacity="0.7" TextWrapping="Wrap"
-							           IsVisible="{Binding SelectedSeries, Converter={x:Static conv:ObjectConverters.IsNull}}" />
-						</Grid>
-					</DockPanel>
+        RequestedThemeVariant="Dark"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="32"
+        Width="1280"
+        Height="860"
+        MinWidth="1100"
+        MinHeight="700"
+        WindowStartupLocation="CenterScreen">
+	<Window.Resources>
+		<DataTemplate x:Key="ConfidenceBadge">
+			<Panel>
+				<Border Classes="badge success" IsVisible="{Binding Confidence, Converter={StaticResource Equals}, ConverterParameter=High}">
+					<TextBlock Text="Matched" />
 				</Border>
-				</Grid>
-			</Grid>
+				<Border Classes="badge warning" IsVisible="{Binding Confidence, Converter={StaticResource Equals}, ConverterParameter=Medium}">
+					<TextBlock Text="Review" />
+				</Border>
+				<Border Classes="badge danger" IsVisible="{Binding Confidence, Converter={StaticResource Equals}, ConverterParameter=Low}">
+					<TextBlock Text="Low match" />
+				</Border>
+				<Border Classes="badge danger" IsVisible="{Binding Confidence, Converter={StaticResource Equals}, ConverterParameter=None}">
+					<TextBlock Text="Unmatched" />
+				</Border>
+			</Panel>
+		</DataTemplate>
+	</Window.Resources>
 
-			<Grid IsVisible="{Binding IsMatchStep}" RowDefinitions="Auto,*" RowSpacing="8">
-				<StackPanel Orientation="Horizontal" Spacing="12">
-					<Border Width="42" Height="63" CornerRadius="4" ClipToBounds="True" IsVisible="{Binding SelectedPoster, Converter={x:Static conv:ObjectConverters.IsNotNull}}">
-						<Image Source="{Binding SelectedPoster}" Stretch="UniformToFill" />
+	<Grid RowDefinitions="32,*" ColumnDefinitions="288,*">
+		<Border Grid.ColumnSpan="2" Background="{DynamicResource Brush.App}" IsHitTestVisible="False" />
+		<Border Grid.Row="1" Grid.Column="0" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,0" Padding="18,20,18,16">
+			<Border.Background>
+				<LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+					<GradientStop Color="#182338" Offset="0" />
+					<GradientStop Color="#151D2E" Offset="0.42" />
+					<GradientStop Color="#12192A" Offset="1" />
+				</LinearGradientBrush>
+			</Border.Background>
+			<DockPanel>
+				<StackPanel DockPanel.Dock="Top" Spacing="8" Margin="2,0,2,22">
+					<Image Source="avares://ReelClean/Assets/Logo.png"
+					       Height="78"
+					       Stretch="Uniform"
+					       HorizontalAlignment="Center"
+					       AutomationProperties.Name="ReelClean"
+					       RenderOptions.BitmapInterpolationMode="HighQuality" />
+					<Border Height="3" CornerRadius="2" Margin="10,2,10,0">
+						<Border.Background>
+							<LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+								<GradientStop Color="#F5A24A" Offset="0" />
+								<GradientStop Color="#528BFF" Offset="0.55" />
+								<GradientStop Color="#35C6D9" Offset="1" />
+							</LinearGradientBrush>
+						</Border.Background>
 					</Border>
-					<TextBlock Text="{Binding SelectedSeriesLabel}" FontWeight="SemiBold" VerticalAlignment="Center" />
-					<Button Content="Reload metadata" Command="{Binding ReloadMetadataCommand}" />
-					<TextBlock Opacity="0.75" VerticalAlignment="Center" TextWrapping="Wrap"
-					           Text="Files that are mapped move to the middle. Anything left on the left is not renamed." />
+					<TextBlock Classes="caption" Text="Your media, properly named." HorizontalAlignment="Center" TextAlignment="Center" />
 				</StackPanel>
 
-				<Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="12">
-					<DockPanel>
-						<TextBlock DockPanel.Dock="Top" Text="Files" FontWeight="SemiBold" Margin="0,0,0,8" />
-						<ListBox x:Name="SourceList" ItemsSource="{Binding SourceFiles}" SelectedItem="{Binding SelectedSourceFile}">
-							<ListBox.ItemTemplate>
-								<DataTemplate>
-									<TextBlock Text="{Binding FileName}" />
-								</DataTemplate>
-							</ListBox.ItemTemplate>
-						</ListBox>
-					</DockPanel>
+				<StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="4,16,4,0">
+					<TextBlock Classes="kicker" Text="TMDB API KEY" Margin="4,0,0,0" />
+					<TextBox PlaceholderText="Paste API key" PasswordChar="•" Text="{Binding ApiKey}" />
+					<Button Classes="accent" Content="Save" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding SaveSettingsCommand}" />
+					<TextBlock Classes="caption" Text="Saved in your user profile, outside this project." />
+					<TextBlock Classes="caption" Text="Metadata from TMDB. Not endorsed by TMDB." Margin="0,6,0,0" />
+				</StackPanel>
 
-					<DockPanel Grid.Column="1">
-						<StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="0,8,0,0">
-							<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-								<Button Content="Add" Click="AddMapping_Click" />
-								<Button Grid.Column="1" Content="Remove" Command="{Binding RemoveMappingCommand}" />
+				<ScrollViewer HorizontalScrollBarVisibility="Disabled">
+					<StackPanel Spacing="4" Margin="0,0,0,8">
+						<TextBlock Classes="kicker" Text="WORKFLOW" Margin="14,0,0,8" />
+
+						<Button Classes="nav" Classes.active="{Binding IsFolderStep}" Command="{Binding NavigateCommand}" CommandParameter="0">
+							<Grid ColumnDefinitions="4,22,*,Auto" ColumnSpacing="8">
+								<Border Classes="navMark" HorizontalAlignment="Left" VerticalAlignment="Center" />
+								<PathIcon Grid.Column="1" Data="{StaticResource Icon.Folder}" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="2" Text="Folder" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="3" Classes="navIndex" Text="01" VerticalAlignment="Center" />
 							</Grid>
-							<Button Content="Auto Map" HorizontalAlignment="Stretch" Command="{Binding AutoMapCommand}" />
-						</StackPanel>
-						<TextBlock DockPanel.Dock="Top" Text="Mappings" FontWeight="SemiBold" Margin="0,0,0,8" />
-						<dg:DataGrid ItemsSource="{Binding Mappings}"
-						             SelectedItem="{Binding SelectedMapping}"
-						             AutoGenerateColumns="False"
-						             IsReadOnly="True"
-						             GridLinesVisibility="Horizontal"
-						             CanUserReorderColumns="False"
-						             CanUserSortColumns="False"
-						             HeadersVisibility="Column">
-							<dg:DataGrid.Columns>
-								<dg:DataGridTextColumn Header="File" Binding="{Binding Source}" Width="*" />
-								<dg:DataGridTextColumn Header="Episode" Binding="{Binding Destination}" Width="2*" />
-							</dg:DataGrid.Columns>
-						</dg:DataGrid>
-					</DockPanel>
+						</Button>
+						<Button Classes="nav" Classes.active="{Binding IsSeriesStep}" Command="{Binding NavigateCommand}" CommandParameter="1">
+							<Grid ColumnDefinitions="4,22,*,Auto" ColumnSpacing="8">
+								<Border Classes="navMark" HorizontalAlignment="Left" VerticalAlignment="Center" />
+								<PathIcon Grid.Column="1" Data="{StaticResource Icon.Series}" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="2" Text="Series" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="3" Classes="navIndex" Text="02" VerticalAlignment="Center" />
+							</Grid>
+						</Button>
+						<Button Classes="nav" Classes.active="{Binding IsMatchStep}" Command="{Binding NavigateCommand}" CommandParameter="2">
+							<Grid ColumnDefinitions="4,22,*,Auto" ColumnSpacing="8">
+								<Border Classes="navMark" HorizontalAlignment="Left" VerticalAlignment="Center" />
+								<PathIcon Grid.Column="1" Data="{StaticResource Icon.Match}" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="2" Text="Match" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="3" Classes="navIndex" Text="03" VerticalAlignment="Center" />
+							</Grid>
+						</Button>
+						<Button Classes="nav" Classes.active="{Binding IsRenameStep}" Command="{Binding NavigateCommand}" CommandParameter="3">
+							<Grid ColumnDefinitions="4,22,*,Auto" ColumnSpacing="8">
+								<Border Classes="navMark" HorizontalAlignment="Left" VerticalAlignment="Center" />
+								<PathIcon Grid.Column="1" Data="{StaticResource Icon.Rename}" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="2" Text="Rename" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="3" Classes="navIndex" Text="04" VerticalAlignment="Center" />
+							</Grid>
+						</Button>
+					</StackPanel>
+				</ScrollViewer>
+			</DockPanel>
+		</Border>
 
-					<DockPanel Grid.Column="2">
-						<TextBlock DockPanel.Dock="Top" Text="Episodes" FontWeight="SemiBold" Margin="0,0,0,8" />
-						<TextBox DockPanel.Dock="Top" PlaceholderText="Filter episodes" Text="{Binding EpisodeFilter}" Margin="0,0,0,8" />
-						<ListBox x:Name="DestinationList" ItemsSource="{Binding DestinationEpisodes}" SelectionMode="Multiple">
-							<ListBox.ItemTemplate>
-								<DataTemplate>
-									<TextBlock Text="{Binding Label}" />
-								</DataTemplate>
-							</ListBox.ItemTemplate>
-						</ListBox>
-					</DockPanel>
+		<Grid Grid.Row="1" Grid.Column="1" RowDefinitions="*,Auto">
+			<Grid Margin="28,22,28,16">
+				<Grid IsVisible="{Binding IsFolderStep}" RowDefinitions="Auto,Auto,*" RowSpacing="16">
+					<StackPanel Spacing="6">
+						<TextBlock Classes="eyebrow" Text="{Binding StepTitle}" />
+						<TextBlock Classes="pageTitle" Text="Choose a folder" />
+						<TextBlock Classes="muted" Text="Scan one folder of TV episodes. Nothing is renamed until you confirm a preview." />
+					</StackPanel>
+
+					<Border Grid.Row="1" Classes="card" Padding="18,16">
+						<StackPanel Spacing="14">
+							<TextBlock Classes="sectionTitle" Text="Library" />
+							<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+								<TextBox PlaceholderText="Folder containing episodes" Text="{Binding FolderPath}" />
+								<Button Grid.Column="1" Content="Browse" MinWidth="96" Command="{Binding BrowseFolderCommand}" />
+								<Button Grid.Column="2" Classes="accent" Content="Scan" MinWidth="96" Command="{Binding ScanCommand}" />
+							</Grid>
+							<StackPanel Orientation="Horizontal" Spacing="22">
+								<CheckBox Content="Include subfolders" IsChecked="{Binding ScanSubdirectories}" />
+								<CheckBox Content="Include hidden files" IsChecked="{Binding IncludeHiddenFiles}" />
+							</StackPanel>
+						</StackPanel>
+					</Border>
+
+					<Border Grid.Row="2" Classes="card dense">
+						<DockPanel>
+							<Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="6,2,6,10">
+								<TextBlock Classes="sectionTitle" Text="Files" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="1" Classes="muted" Text="{Binding FileSummary}" VerticalAlignment="Center" />
+							</Grid>
+							<ListBox Classes="inset" ItemsSource="{Binding Files}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+								<ListBox.ItemTemplate>
+									<DataTemplate>
+										<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+											<TextBlock Classes="trim" MinWidth="0" Text="{Binding FileName}" ToolTip.Tip="{Binding FullPath}" />
+											<Border Grid.Column="1" Classes="badge">
+												<TextBlock Text="{Binding Extension, Converter={StaticResource ExtensionLabel}}" />
+											</Border>
+											<TextBlock Grid.Column="2" Classes="caption" MinWidth="64" TextAlignment="Right" VerticalAlignment="Center"
+											           Text="{Binding FileSize, Converter={StaticResource FileSize}}" />
+										</Grid>
+									</DataTemplate>
+								</ListBox.ItemTemplate>
+							</ListBox>
+						</DockPanel>
+					</Border>
+				</Grid>
+
+				<Grid IsVisible="{Binding IsSeriesStep}" RowDefinitions="Auto,Auto,*" RowSpacing="16">
+					<StackPanel Spacing="6">
+						<TextBlock Classes="eyebrow" Text="{Binding StepTitle}" />
+						<TextBlock Classes="pageTitle" Text="Find the series" />
+						<TextBlock Classes="muted" Text="A title from the folder or filenames is filled in when one can be read. Nothing is searched until you press Search." />
+					</StackPanel>
+
+					<Border Grid.Row="1" Classes="card" Padding="16,14">
+						<Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+							<TextBox PlaceholderText="Search TMDB" Text="{Binding SearchQuery}" KeyDown="SearchQuery_KeyDown" />
+							<Button Grid.Column="1" Classes="accent" Content="Search" MinWidth="108" Command="{Binding SearchSeriesCommand}" />
+						</Grid>
+					</Border>
+
+					<Grid Grid.Row="2" ColumnDefinitions="*,340" ColumnSpacing="16">
+						<Border Classes="card dense">
+							<DockPanel>
+								<TextBlock DockPanel.Dock="Top" Classes="sectionTitle" Text="Results" Margin="6,2,6,10" />
+								<ScrollViewer HorizontalScrollBarVisibility="Disabled">
+									<ItemsControl ItemsSource="{Binding SeriesResults}">
+										<ItemsControl.ItemsPanel>
+											<ItemsPanelTemplate>
+												<WrapPanel />
+											</ItemsPanelTemplate>
+										</ItemsControl.ItemsPanel>
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<Button Classes="poster" Click="Poster_Click">
+													<StackPanel Width="148" Spacing="8">
+														<Border Classes="posterFrame" Classes.selected="{Binding IsSelected}" Width="148">
+															<Border Width="140" Height="210" CornerRadius="11" ClipToBounds="True">
+																<Panel>
+																	<Border Background="{DynamicResource Brush.Input}">
+																		<TextBlock Text="{Binding Label}"
+																		           TextWrapping="Wrap"
+																		           TextAlignment="Center"
+																		           HorizontalAlignment="Center"
+																		           VerticalAlignment="Center"
+																		           Margin="10"
+																		           Foreground="{DynamicResource Brush.TextMuted}"
+																		           IsVisible="{Binding Poster, Converter={x:Static conv:ObjectConverters.IsNull}}" />
+																	</Border>
+																	<Image Source="{Binding Poster}" Stretch="UniformToFill" />
+																</Panel>
+															</Border>
+														</Border>
+														<TextBlock Text="{Binding Label}" TextWrapping="Wrap" TextAlignment="Center" MaxHeight="40" FontSize="13" FontWeight="Medium" />
+													</StackPanel>
+												</Button>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</ScrollViewer>
+							</DockPanel>
+						</Border>
+
+						<Border Grid.Column="1" Classes="card">
+							<DockPanel>
+								<TextBlock DockPanel.Dock="Top" Classes="sectionTitle" Text="Details" Margin="0,0,0,14" />
+								<Button DockPanel.Dock="Bottom" Content="Open on TMDB" HorizontalAlignment="Left" Margin="0,14,0,0"
+								        Command="{Binding OpenSeriesOnTmdbCommand}" IsVisible="{Binding HasSeriesDetails}" />
+								<Grid>
+									<ScrollViewer IsVisible="{Binding HasSeriesDetails}" HorizontalScrollBarVisibility="Disabled">
+										<StackPanel Spacing="12">
+											<Border Width="168" Height="252" CornerRadius="12" ClipToBounds="True" HorizontalAlignment="Left"
+											        IsVisible="{Binding SelectedPoster, Converter={x:Static conv:ObjectConverters.IsNotNull}}">
+												<Image Source="{Binding SelectedPoster}" Stretch="UniformToFill" />
+											</Border>
+											<TextBlock Text="{Binding SelectedSeriesLabel}" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+											<TextBlock Classes="muted" Text="{Binding SelectedFacts}" />
+											<TextBlock Classes="kicker" Text="ABOUT" />
+											<TextBlock Text="{Binding SelectedOverview}" TextWrapping="Wrap" LineHeight="22" />
+										</StackPanel>
+									</ScrollViewer>
+									<TextBlock Classes="muted" Text="Select a cover to see the year and description."
+									           IsVisible="{Binding SelectedSeries, Converter={x:Static conv:ObjectConverters.IsNull}}" />
+								</Grid>
+							</DockPanel>
+						</Border>
+					</Grid>
+				</Grid>
+
+				<Grid IsVisible="{Binding IsMatchStep}" RowDefinitions="Auto,Auto,*" RowSpacing="16">
+					<StackPanel Spacing="6">
+						<TextBlock Classes="eyebrow" Text="{Binding StepTitle}" />
+						<TextBlock Classes="pageTitle" Text="Match files" />
+						<TextBlock Classes="muted" Text="Files that are mapped move to the middle. Anything left in Files is not renamed." />
+					</StackPanel>
+
+					<Border Grid.Row="1" Classes="card" Padding="14,12">
+						<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+							<Border Width="46" Height="68" CornerRadius="8" ClipToBounds="True" VerticalAlignment="Center"
+							        IsVisible="{Binding SelectedPoster, Converter={x:Static conv:ObjectConverters.IsNotNull}}">
+								<Image Source="{Binding SelectedPoster}" Stretch="UniformToFill" />
+							</Border>
+							<TextBlock Grid.Column="1" Text="{Binding SelectedSeriesLabel}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
+							<Button Grid.Column="2" Content="Reload metadata" VerticalAlignment="Center" Command="{Binding ReloadMetadataCommand}" />
+						</Grid>
+					</Border>
+
+					<Grid Grid.Row="2" ColumnDefinitions="*,1.15*,*" ColumnSpacing="14">
+						<Border Classes="card dense">
+							<DockPanel>
+								<TextBlock DockPanel.Dock="Top" Classes="sectionTitle" Text="Files" Margin="6,2,6,10" />
+								<ListBox x:Name="SourceList" Classes="inset" ItemsSource="{Binding SourceFiles}" SelectedItem="{Binding SelectedSourceFile}"
+								         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+									<ListBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Classes="trim" MinWidth="0" Text="{Binding FileName}" ToolTip.Tip="{Binding FullPath}" />
+										</DataTemplate>
+									</ListBox.ItemTemplate>
+								</ListBox>
+							</DockPanel>
+						</Border>
+
+						<Border Grid.Column="1" Classes="card dense">
+							<DockPanel>
+								<StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="4,12,4,2">
+									<TextBlock Classes="caption" Text="Select a file and one or more episodes, then add the mapping." />
+									<Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+										<Button Classes="accent" Content="Add" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="AddMapping_Click" />
+										<Button Grid.Column="1" Content="Remove" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding RemoveMappingCommand}" />
+									</Grid>
+									<Button Classes="accent" Content="Auto Map" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding AutoMapCommand}" />
+								</StackPanel>
+								<TextBlock DockPanel.Dock="Top" Classes="sectionTitle" Text="Mappings" Margin="6,2,6,10" />
+								<dg:DataGrid ItemsSource="{Binding Mappings}"
+								             SelectedItem="{Binding SelectedMapping}"
+								             AutoGenerateColumns="False"
+								             IsReadOnly="True"
+								             CanUserReorderColumns="False"
+								             CanUserSortColumns="False"
+								             HeadersVisibility="Column">
+									<dg:DataGrid.Columns>
+										<dg:DataGridTemplateColumn Header="File" Width="*">
+											<dg:DataGridTemplateColumn.CellTemplate>
+												<DataTemplate>
+													<TextBlock Classes="trim" Text="{Binding Source}" ToolTip.Tip="{Binding Match.File.FullPath}" />
+												</DataTemplate>
+											</dg:DataGridTemplateColumn.CellTemplate>
+										</dg:DataGridTemplateColumn>
+										<dg:DataGridTemplateColumn Header="Match" Width="118">
+											<dg:DataGridTemplateColumn.CellTemplate>
+												<DataTemplate>
+													<ContentControl Content="{Binding}" ContentTemplate="{StaticResource ConfidenceBadge}" VerticalAlignment="Center" />
+												</DataTemplate>
+											</dg:DataGridTemplateColumn.CellTemplate>
+										</dg:DataGridTemplateColumn>
+										<dg:DataGridTemplateColumn Header="Episode" Width="2*">
+											<dg:DataGridTemplateColumn.CellTemplate>
+												<DataTemplate>
+													<TextBlock Classes="trim" Text="{Binding Destination}" ToolTip.Tip="{Binding Destination}" />
+												</DataTemplate>
+											</dg:DataGridTemplateColumn.CellTemplate>
+										</dg:DataGridTemplateColumn>
+									</dg:DataGrid.Columns>
+								</dg:DataGrid>
+							</DockPanel>
+						</Border>
+
+						<Border Grid.Column="2" Classes="card dense">
+							<DockPanel>
+								<StackPanel DockPanel.Dock="Top" Spacing="8" Margin="6,2,6,10">
+									<TextBlock Classes="sectionTitle" Text="Episodes" />
+									<TextBlock Classes="caption" Text="Select one or more." />
+									<TextBox PlaceholderText="Filter episodes" Text="{Binding EpisodeFilter}" />
+								</StackPanel>
+								<ListBox x:Name="DestinationList" Classes="inset" ItemsSource="{Binding DestinationEpisodes}" SelectionMode="Multiple"
+								         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+									<ListBox.ItemTemplate>
+										<DataTemplate>
+											<TextBlock Classes="trim" MinWidth="0" Text="{Binding Label}" ToolTip.Tip="{Binding Label}" />
+										</DataTemplate>
+									</ListBox.ItemTemplate>
+								</ListBox>
+							</DockPanel>
+						</Border>
+					</Grid>
+				</Grid>
+
+				<Grid IsVisible="{Binding IsRenameStep}" RowDefinitions="Auto,Auto,*" RowSpacing="16">
+					<StackPanel Spacing="6">
+						<TextBlock Classes="eyebrow" Text="{Binding StepTitle}" />
+						<TextBlock Classes="pageTitle" Text="Preview and rename" />
+						<TextBlock Classes="muted" Text="Only mapped files are renamed. Files still in the Files list are left alone. Remove a mapping first if the episode is wrong." />
+					</StackPanel>
+
+					<Border Grid.Row="1" Classes="card">
+						<StackPanel Spacing="14">
+							<TextBlock Text="{Binding PlanSummary}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+							<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+								<StackPanel Spacing="6">
+									<TextBlock Classes="kicker" Text="TEMPLATE" />
+									<ComboBox Width="180" ItemsSource="{Binding TemplateNames}" SelectedItem="{Binding TemplateName}" />
+								</StackPanel>
+								<StackPanel Grid.Column="1" Spacing="6">
+									<TextBlock Classes="kicker" Text="PATTERN" />
+									<Border Classes="well">
+										<TextBlock Text="{Binding CurrentPattern}" TextWrapping="Wrap" FontSize="13" />
+									</Border>
+								</StackPanel>
+								<CheckBox Grid.Column="2" Content="Include episode titles" IsChecked="{Binding IncludeEpisodeTitles}" VerticalAlignment="Bottom" Margin="0,0,0,8" />
+							</Grid>
+							<TextBox x:Name="CustomTemplateBox"
+							         PlaceholderText="Custom template"
+							         Text="{Binding CustomTemplate}"
+							         IsVisible="{Binding IsCustomTemplate}" />
+							<StackPanel Spacing="8">
+								<TextBlock Classes="kicker" Text="INSERT A TOKEN" />
+								<ItemsControl ItemsSource="{Binding TemplateTokens}">
+									<ItemsControl.ItemsPanel>
+										<ItemsPanelTemplate>
+											<WrapPanel />
+										</ItemsPanelTemplate>
+									</ItemsControl.ItemsPanel>
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<Button Classes="chip" Content="{Binding Label}" Tag="{Binding Value}" Click="Token_Click" />
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
+							<StackPanel Orientation="Horizontal" Spacing="8">
+								<Button Classes="accent" Content="Rename" MinWidth="124" Command="{Binding RenameCommand}" />
+								<Button Content="Undo last rename" Command="{Binding UndoCommand}" />
+							</StackPanel>
+						</StackPanel>
+					</Border>
+
+					<Border Grid.Row="2" Classes="card dense">
+						<DockPanel>
+							<Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="6,2,6,10">
+								<TextBlock Classes="sectionTitle" Text="Rename preview" />
+								<TextBlock Grid.Column="1" Classes="caption" Text="Current names stay muted. New names are what will be written." VerticalAlignment="Center" />
+							</Grid>
+							<ListBox Classes="inset" ItemsSource="{Binding Mappings}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+								<ListBox.ItemTemplate>
+									<DataTemplate>
+										<Border Classes="previewRow" ToolTip.Tip="{Binding Match.File.FullPath}">
+											<Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+												<Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+													<Border Classes="badge" VerticalAlignment="Center">
+														<TextBlock Text="Current" />
+													</Border>
+													<TextBlock Grid.Column="1" Classes="muted" Text="{Binding Source}" VerticalAlignment="Center" />
+												</Grid>
+												<Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="10">
+													<Border Classes="badge info" VerticalAlignment="Center">
+														<TextBlock Text="New name" />
+													</Border>
+													<TextBlock Grid.Column="1" Classes="proposed" Text="{Binding Proposed}" VerticalAlignment="Center" />
+												</Grid>
+												<Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+													<TextBlock Classes="caption" Text="{Binding Destination}" VerticalAlignment="Center" />
+													<ContentControl Grid.Column="1" Content="{Binding}" ContentTemplate="{StaticResource ConfidenceBadge}" VerticalAlignment="Center" />
+												</Grid>
+											</Grid>
+										</Border>
+									</DataTemplate>
+								</ListBox.ItemTemplate>
+							</ListBox>
+						</DockPanel>
+					</Border>
 				</Grid>
 			</Grid>
 
-			<Grid IsVisible="{Binding IsRenameStep}" RowDefinitions="Auto,Auto,*" RowSpacing="12">
-				<StackPanel Spacing="8">
-					<TextBlock Text="{Binding PlanSummary}" FontWeight="SemiBold" />
-					<StackPanel Orientation="Horizontal" Spacing="8">
-						<ComboBox Width="160" ItemsSource="{Binding TemplateNames}" SelectedItem="{Binding TemplateName}" />
-						<CheckBox Content="Include episode titles" IsChecked="{Binding IncludeEpisodeTitles}" VerticalAlignment="Center" />
-						<Button Content="Rename" Command="{Binding RenameCommand}" />
-						<Button Content="Undo last rename" Command="{Binding UndoCommand}" />
+			<Border Grid.Row="1" Padding="28,14" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,0" Background="{DynamicResource Brush.Sidebar}">
+				<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="16">
+					<StackPanel Orientation="Horizontal" Spacing="12">
+						<ProgressBar Width="132" IsIndeterminate="True" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+						<TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" TextWrapping="Wrap" />
 					</StackPanel>
-					<TextBlock Text="{Binding CurrentPattern}" Opacity="0.75" TextWrapping="Wrap" />
-					<TextBox x:Name="CustomTemplateBox"
-					         PlaceholderText="Custom template"
-					         Text="{Binding CustomTemplate}"
-					         IsVisible="{Binding IsCustomTemplate}" />
-					<TextBlock Text="Insert a token" Opacity="0.75" />
-					<ItemsControl ItemsSource="{Binding TemplateTokens}">
-						<ItemsControl.ItemsPanel>
-							<ItemsPanelTemplate>
-								<WrapPanel />
-							</ItemsPanelTemplate>
-						</ItemsControl.ItemsPanel>
-						<ItemsControl.ItemTemplate>
-							<DataTemplate>
-								<Button Content="{Binding Label}" Tag="{Binding Value}" Margin="0,0,8,8" Click="Token_Click" />
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-					</ItemsControl>
-				</StackPanel>
-				<TextBlock Grid.Row="1" Opacity="0.7" TextWrapping="Wrap"
-				           Text="Only mapped files are renamed. Files still in the Files list are left alone. Remove a mapping first if the episode is wrong." />
-				<ListBox Grid.Row="2" ItemsSource="{Binding Mappings}">
-					<ListBox.ItemTemplate>
-						<DataTemplate>
-							<StackPanel Margin="0,4">
-								<Grid ColumnDefinitions="*,Auto,*">
-									<TextBlock Text="{Binding Source}" TextWrapping="Wrap" />
-									<TextBlock Grid.Column="1" Text="→" Margin="12,0" Opacity="0.6" />
-									<TextBlock Grid.Column="2" Text="{Binding Proposed}" TextWrapping="Wrap" />
-								</Grid>
-								<TextBlock Text="{Binding Destination}" Opacity="0.7" TextWrapping="Wrap" />
-							</StackPanel>
-						</DataTemplate>
-					</ListBox.ItemTemplate>
-				</ListBox>
-			</Grid>
+					<Button Grid.Column="1" Content="Cancel" MinWidth="96" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" VerticalAlignment="Center" />
+					<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+						<Button Content="Previous" MinWidth="112" Command="{Binding PreviousCommand}" />
+						<Button Classes="accent" Content="Next" MinWidth="112" Command="{Binding NextCommand}" />
+					</StackPanel>
+				</Grid>
+			</Border>
 		</Grid>
-	</DockPanel>
+	</Grid>
 </Window>

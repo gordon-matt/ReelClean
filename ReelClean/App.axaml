@@ -1,9 +1,54 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="using:ReelClean.Converters"
              x:Class="ReelClean.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Dark">
+	<Application.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceInclude Source="avares://ReelClean/Styles/Colors.axaml" />
+				<ResourceInclude Source="avares://ReelClean/Styles/Icons.axaml" />
+			</ResourceDictionary.MergedDictionaries>
+			<conv:EqualityConverter x:Key="Equals" />
+			<conv:FileSizeConverter x:Key="FileSize" />
+			<conv:ExtensionLabelConverter x:Key="ExtensionLabel" />
+		</ResourceDictionary>
+	</Application.Resources>
 	<Application.Styles>
-		<FluentTheme />
+		<FluentTheme>
+			<FluentTheme.Palettes>
+				<ColorPaletteResources x:Key="Dark"
+				                       Accent="#FF528BFF"
+				                       ErrorText="#FFF16D78"
+				                       RegionColor="#FF101522"
+				                       BaseHigh="#FFF1F5FC"
+				                       BaseMediumHigh="#CCF1F5FC"
+				                       BaseMedium="#99F1F5FC"
+				                       BaseMediumLow="#66F1F5FC"
+				                       BaseLow="#33F1F5FC"
+				                       AltHigh="#FF121826"
+				                       AltMediumHigh="#CC121826"
+				                       AltMedium="#99121826"
+				                       AltMediumLow="#66121826"
+				                       AltLow="#33121826"
+				                       ChromeHigh="#FF303D53"
+				                       ChromeMedium="#FF151D2E"
+				                       ChromeMediumLow="#FF1C273A"
+				                       ChromeLow="#FF101522"
+				                       ChromeAltLow="#FFF1F5FC"
+				                       ChromeWhite="#FFF1F5FC"
+				                       ChromeGray="#FF303D53"
+				                       ChromeDisabledHigh="#FF243149"
+				                       ChromeDisabledLow="#FF7E8CA3"
+				                       ChromeBlackHigh="#FF0B101C"
+				                       ChromeBlackMedium="#CC0B101C"
+				                       ChromeBlackMediumLow="#660B101C"
+				                       ChromeBlackLow="#330B101C"
+				                       ListLow="#1AF1F5FC"
+				                       ListMedium="#2EF1F5FC" />
+			</FluentTheme.Palettes>
+		</FluentTheme>
 		<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+		<StyleInclude Source="avares://ReelClean/Styles/Controls.axaml" />
 	</Application.Styles>
 </Application>

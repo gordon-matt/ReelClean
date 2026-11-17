@@ -1,16 +1,37 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="ReelClean.Views.ConfirmWindow"
-        Width="440"
+        Width="500"
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         CanResize="False"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="32"
+        RequestedThemeVariant="Dark"
         Title="Rename files">
-	<StackPanel Margin="20" Spacing="16">
-		<TextBlock x:Name="MessageText" TextWrapping="Wrap" />
-		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-			<Button Content="Cancel" MinWidth="88" IsCancel="True" Click="Cancel_Click" />
-			<Button Content="Rename" MinWidth="88" IsDefault="True" Click="Confirm_Click" />
+	<DockPanel>
+		<Border DockPanel.Dock="Top" Height="32" Background="{DynamicResource Brush.App}" IsHitTestVisible="False" />
+		<Border DockPanel.Dock="Top" Height="3">
+			<Border.Background>
+				<LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+					<GradientStop Color="#F5A24A" Offset="0" />
+					<GradientStop Color="#528BFF" Offset="0.55" />
+					<GradientStop Color="#35C6D9" Offset="1" />
+				</LinearGradientBrush>
+			</Border.Background>
+		</Border>
+		<StackPanel Margin="24" Spacing="18">
+			<Image Source="avares://ReelClean/Assets/Logo.png"
+			       Height="46"
+			       Stretch="Uniform"
+			       HorizontalAlignment="Left"
+			       AutomationProperties.Name="ReelClean"
+			       RenderOptions.BitmapInterpolationMode="HighQuality" />
+			<TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="15" LineHeight="22" />
+			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+				<Button Content="Cancel" MinWidth="108" IsCancel="True" Click="Cancel_Click" />
+				<Button Classes="accent" Content="Rename" MinWidth="108" IsDefault="True" Click="Confirm_Click" />
+			</StackPanel>
 		</StackPanel>
-	</StackPanel>
+	</DockPanel>
 </Window>

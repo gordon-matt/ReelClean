@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using ReelClean;
 
 namespace ReelClean.Views;
 
@@ -15,6 +16,15 @@ public partial class ConfirmWindow : Window
         InitializeComponent();
         Title = title;
         MessageText.Text = message;
+        Opened += (_, _) => WindowCaption.UseDarkFrame(this);
+        try
+        {
+            Icon = Branding.Icon;
+        }
+        catch (Exception)
+        {
+            // A missing brand asset should not stop the dialog from opening.
+        }
     }
 
     public bool Confirmed { get; private set; }

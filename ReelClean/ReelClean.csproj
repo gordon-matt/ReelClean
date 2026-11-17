@@ -12,6 +12,7 @@
 
 	<ItemGroup>
 		<Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+		<AvaloniaResource Include="..\_Misc\Logo.png" Link="Assets\Logo.png" />
 	</ItemGroup>
 
 	<ItemGroup>

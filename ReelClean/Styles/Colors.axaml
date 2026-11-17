@@ -1,0 +1,94 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<SolidColorBrush x:Key="Brush.App" Color="#101522" />
+	<SolidColorBrush x:Key="Brush.Sidebar" Color="#151D2E" />
+	<SolidColorBrush x:Key="Brush.Card" Color="#1C273A" />
+	<SolidColorBrush x:Key="Brush.Elevated" Color="#243149" />
+	<SolidColorBrush x:Key="Brush.ElevatedHover" Color="#2C3C58" />
+	<SolidColorBrush x:Key="Brush.Input" Color="#121826" />
+	<SolidColorBrush x:Key="Brush.InputHover" Color="#182234" />
+	<SolidColorBrush x:Key="Brush.Accent" Color="#528BFF" />
+	<SolidColorBrush x:Key="Brush.AccentSoft" Color="#1B3154" />
+	<SolidColorBrush x:Key="Brush.Teal" Color="#35C6D9" />
+	<SolidColorBrush x:Key="Brush.Success" Color="#35C98A" />
+	<SolidColorBrush x:Key="Brush.SuccessSoft" Color="#16352C" />
+	<SolidColorBrush x:Key="Brush.Warning" Color="#F5B942" />
+	<SolidColorBrush x:Key="Brush.WarningSoft" Color="#3A3118" />
+	<SolidColorBrush x:Key="Brush.Danger" Color="#F16D78" />
+	<SolidColorBrush x:Key="Brush.DangerSoft" Color="#3A2228" />
+	<SolidColorBrush x:Key="Brush.InfoSoft" Color="#1A2E52" />
+	<SolidColorBrush x:Key="Brush.Text" Color="#F1F5FC" />
+	<SolidColorBrush x:Key="Brush.TextMuted" Color="#9BAAC0" />
+	<SolidColorBrush x:Key="Brush.TextFaint" Color="#6E7C93" />
+	<SolidColorBrush x:Key="Brush.Border" Color="#303D53" />
+	<SolidColorBrush x:Key="Brush.RowHover" Color="#243149" />
+	<SolidColorBrush x:Key="Brush.RowSelected" Color="#2A436E" />
+	<SolidColorBrush x:Key="Brush.OnAccent" Color="#F4F7FF" />
+
+	<CornerRadius x:Key="Radius.Card">16</CornerRadius>
+	<CornerRadius x:Key="Radius.Control">10</CornerRadius>
+	<CornerRadius x:Key="Radius.Badge">999</CornerRadius>
+	<CornerRadius x:Key="Radius.Poster">12</CornerRadius>
+	<CornerRadius x:Key="ControlCornerRadius">10</CornerRadius>
+	<Thickness x:Key="ButtonPadding">14,9</Thickness>
+	<Thickness x:Key="TextControlThemePadding">12,8</Thickness>
+	<Thickness x:Key="TextControlBorderThemeThicknessFocused">1</Thickness>
+	<x:Double x:Key="TextControlThemeMinHeight">40</x:Double>
+	<Thickness x:Key="ComboBoxPadding">12,8,8,8</Thickness>
+	<x:Double x:Key="ComboBoxMinHeight">40</x:Double>
+	<Thickness x:Key="ListBoxItemPadding">10,8</Thickness>
+
+	<SolidColorBrush x:Key="TextControlBackground" Color="#121826" />
+	<SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#182234" />
+	<SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#101522" />
+	<SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#1A121826" />
+	<SolidColorBrush x:Key="TextControlBorderBrush" Color="#303D53" />
+	<SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#528BFF" />
+	<SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#528BFF" />
+	<SolidColorBrush x:Key="TextControlForeground" Color="#F1F5FC" />
+	<SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="#F1F5FC" />
+	<SolidColorBrush x:Key="TextControlForegroundFocused" Color="#F1F5FC" />
+	<SolidColorBrush x:Key="TextControlForegroundDisabled" Color="#6E7C93" />
+	<SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#809BAAC0" />
+
+	<SolidColorBrush x:Key="ComboBoxBackground" Color="#121826" />
+	<SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#182234" />
+	<SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#101522" />
+	<SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="#1A121826" />
+	<SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#303D53" />
+	<SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#528BFF" />
+	<SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#528BFF" />
+	<SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="#2A3548" />
+	<SolidColorBrush x:Key="ComboBoxForeground" Color="#F1F5FC" />
+	<SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#1C273A" />
+	<SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#303D53" />
+
+	<SolidColorBrush x:Key="ButtonBackground" Color="#243149" />
+	<SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#2C3C58" />
+	<SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#1A2740" />
+	<SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="#1A2233" />
+	<SolidColorBrush x:Key="ButtonForeground" Color="#F1F5FC" />
+	<SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="#F1F5FC" />
+	<SolidColorBrush x:Key="ButtonForegroundPressed" Color="#F1F5FC" />
+	<SolidColorBrush x:Key="ButtonForegroundDisabled" Color="#6E7C93" />
+	<SolidColorBrush x:Key="ButtonBorderBrush" Color="#303D53" />
+	<SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#528BFF" />
+	<SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#3A73E6" />
+	<SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="#2A3548" />
+
+	<SolidColorBrush x:Key="AccentButtonBackgroundDisabled" Color="#243656" />
+	<SolidColorBrush x:Key="AccentButtonForegroundDisabled" Color="#8AA0C0" />
+	<SolidColorBrush x:Key="AccentButtonBorderBrushDisabled" Color="#243656" />
+
+	<SolidColorBrush x:Key="DataGridColumnHeaderForegroundBrush" Color="#9BAAC0" />
+	<SolidColorBrush x:Key="DataGridColumnHeaderBackgroundBrush" Color="#151D2E" />
+	<SolidColorBrush x:Key="DataGridColumnHeaderHoveredBackgroundBrush" Color="#243149" />
+	<SolidColorBrush x:Key="DataGridColumnHeaderPressedBackgroundBrush" Color="#1C273A" />
+	<SolidColorBrush x:Key="DataGridRowHoveredBackgroundColor" Color="#243149" />
+	<SolidColorBrush x:Key="DataGridRowSelectedBackgroundBrush" Color="#2A436E" />
+	<SolidColorBrush x:Key="DataGridRowSelectedHoveredBackgroundBrush" Color="#2A436E" />
+	<SolidColorBrush x:Key="DataGridRowSelectedUnfocusedBackgroundBrush" Color="#2A436E" />
+	<SolidColorBrush x:Key="DataGridRowSelectedHoveredUnfocusedBackgroundBrush" Color="#2A436E" />
+
+</ResourceDictionary>

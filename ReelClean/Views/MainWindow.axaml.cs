@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using ReelClean;
 using ReelClean.ViewModels;
 
 namespace ReelClean.Views;
@@ -10,6 +11,15 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        Opened += (_, _) => WindowCaption.UseDarkFrame(this);
+        try
+        {
+            Icon = Branding.Icon;
+        }
+        catch (Exception)
+        {
+            // A missing brand asset should not stop the window from opening.
+        }
     }
 
     private void Poster_Click(object? sender, RoutedEventArgs e)

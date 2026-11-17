@@ -260,6 +260,25 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanGoNext))]
     private void Next() => MoveTo(_step + 1);
 
+    [RelayCommand(CanExecute = nameof(CanNavigate))]
+    private void Navigate(string? step)
+    {
+        if (!TryStep(step, out int index) || index == _step || !CanNavigate(step))
+        {
+            return;
+        }
+
+        MoveTo(index);
+    }
+
+    private bool CanNavigate(string? step)
+        => TryStep(step, out int index)
+            && index is >= 0 and <= 3
+            && (index <= _step || (index == _step + 1 && CanGoNext()));
+
+    private static bool TryStep(string? step, out int index)
+        => int.TryParse(step, NumberStyles.Integer, CultureInfo.InvariantCulture, out index);
+
     private void MoveTo(int step)
     {
         if (step < 0 || step > 3 || step == _step)
@@ -864,6 +883,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         PreviousCommand.NotifyCanExecuteChanged();
         NextCommand.NotifyCanExecuteChanged();
+        NavigateCommand.NotifyCanExecuteChanged();
     }
 
     private static string Describe(IResult result)
