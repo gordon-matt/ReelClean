@@ -23,6 +23,7 @@ public sealed class JsonSettingsStore(string path) : ISettingsStore
         options.ScanSubdirectories = stored.ScanSubdirectories;
         options.IncludeHiddenFiles = stored.IncludeHiddenFiles;
         options.IncludeEpisodeTitles = stored.IncludeEpisodeTitles;
+        options.AlwaysAutoMap = stored.AlwaysAutoMap;
         options.TemplateName = string.IsNullOrWhiteSpace(stored.TemplateName) ? Naming.RenameTemplates.PlexName : stored.TemplateName;
         options.CustomTemplate = stored.CustomTemplate ?? string.Empty;
     }

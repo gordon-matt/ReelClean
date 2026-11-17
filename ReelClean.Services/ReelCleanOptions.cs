@@ -12,6 +12,8 @@ public sealed class ReelCleanOptions
 
     public bool IncludeEpisodeTitles { get; set; } = true;
 
+    public bool AlwaysAutoMap { get; set; }
+
     public string TemplateName { get; set; } = RenameTemplates.PlexName;
 
     public string CustomTemplate { get; set; } = string.Empty;

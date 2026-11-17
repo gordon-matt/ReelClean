@@ -204,10 +204,21 @@
 				</Grid>
 
 				<Grid IsVisible="{Binding IsMatchStep}" RowDefinitions="Auto,Auto,*" RowSpacing="16">
-					<StackPanel Spacing="6">
-						<TextBlock Classes="eyebrow" Text="{Binding StepTitle}" />
-						<TextBlock Classes="pageTitle" Text="Match files" />
-						<TextBlock Classes="muted" Text="Files that are mapped move to the middle. Anything left in Files is not renamed." />
+					<StackPanel Spacing="12">
+						<StackPanel Spacing="6">
+							<TextBlock Classes="eyebrow" Text="{Binding StepTitle}" />
+							<TextBlock Classes="pageTitle" Text="Match files" />
+							<TextBlock Classes="muted" Text="Files that are mapped move to the middle. Anything left in Files is not renamed." />
+						</StackPanel>
+						<Border Background="{DynamicResource Brush.InfoSoft}"
+						        BorderBrush="{DynamicResource Brush.Accent}"
+						        BorderThickness="1"
+						        CornerRadius="12"
+						        Padding="14,12"
+						        IsVisible="{Binding AllFilesMapped}">
+							<TextBlock TextWrapping="Wrap"
+							           Text="Every file is already mapped. Check that each episode is correct, then continue. If a match is wrong, remove it and map that file yourself." />
+						</Border>
 					</StackPanel>
 
 					<Border Grid.Row="1" Classes="card" Padding="14,12">
@@ -408,7 +419,9 @@
 						</Button>
 					</Grid>
 					<StackPanel Spacing="12">
-						<TextBlock Classes="kicker" Text="TMDB API KEY" />
+						<CheckBox Content="Always auto map" IsChecked="{Binding AlwaysAutoMap}" />
+						<TextBlock Classes="caption" Text="When this is on, files are matched from their names as soon as Match opens. When it is off, nothing is mapped until you click Auto Map." />
+						<TextBlock Classes="kicker" Text="TMDB API KEY" Margin="0,8,0,0" />
 						<TextBox PlaceholderText="Paste API key" PasswordChar="•" Text="{Binding ApiKey}" />
 						<Button Classes="accent" Content="Save" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Command="{Binding SaveSettingsCommand}" />
 						<TextBlock Classes="caption" Text="Saved in your user profile, outside this project." />

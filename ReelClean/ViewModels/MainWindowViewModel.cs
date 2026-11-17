@@ -39,6 +39,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _templateName;
     private string _customTemplate;
     private bool _includeEpisodeTitles;
+    private bool _alwaysAutoMap;
     private string _episodeFilter = string.Empty;
     private int _step;
     private bool _episodesReady;
@@ -71,6 +72,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _templateName = string.IsNullOrWhiteSpace(options.TemplateName) ? RenameTemplates.PlexName : options.TemplateName;
         _customTemplate = options.CustomTemplate;
         _includeEpisodeTitles = options.IncludeEpisodeTitles;
+        _alwaysAutoMap = options.AlwaysAutoMap;
         ApiKey = options.Tmdb.ApiKey;
         ScanSubdirectories = options.ScanSubdirectories;
         IncludeHiddenFiles = options.IncludeHiddenFiles;
@@ -193,6 +195,20 @@ public partial class MainWindowViewModel : ViewModelBase
             }
         }
     }
+
+    public bool AlwaysAutoMap
+    {
+        get => _alwaysAutoMap;
+        set
+        {
+            if (SetProperty(ref _alwaysAutoMap, value))
+            {
+                RememberPreferences();
+            }
+        }
+    }
+
+    public bool AllFilesMapped => SourceFiles.Count == 0 && Mappings.Count > 0;
 
     public string EpisodeFilter
     {
@@ -364,9 +380,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         int added = AutoMapRemaining();
         RebuildPlan();
-        StatusMessage = added == 0
-            ? "No further files could be mapped from their names."
-            : $"Mapped {added} file(s). {SourceFiles.Count} still unmapped.";
+        ReportMappings(added, triedNames: true);
     }
 
     [RelayCommand(CanExecute = nameof(CanRun))]
@@ -385,6 +399,7 @@ public partial class MainWindowViewModel : ViewModelBase
         RefreshDestinations();
         RebuildPlan();
         StatusMessage = $"Removed {mapping.Source}.";
+        OnPropertyChanged(nameof(AllFilesMapped));
     }
 
     [RelayCommand(CanExecute = nameof(CanRename))]
@@ -474,6 +489,7 @@ public partial class MainWindowViewModel : ViewModelBase
         RefreshDestinations();
         RebuildPlan();
         StatusMessage = $"Mapped {file.FileName}.";
+        OnPropertyChanged(nameof(AllFilesMapped));
     }
 
     public void InsertToken(string token, int caret)
@@ -631,11 +647,35 @@ public partial class MainWindowViewModel : ViewModelBase
             .ThenBy(episode => episode.EpisodeNumber)
             .Select(episode => new EpisodeChoice(episode)));
         RefreshDestinations();
-        int added = AutoMapRemaining();
+        int added = AlwaysAutoMap ? AutoMapRemaining() : 0;
         RebuildPlan();
-        StatusMessage = added == 0
-            ? $"No files were mapped from their names. {SourceFiles.Count} are still on the left."
-            : $"Mapped {added} file(s). {SourceFiles.Count} still unmapped.";
+        ReportMappings(added, triedNames: AlwaysAutoMap);
+    }
+
+    private void ReportMappings(int added, bool triedNames)
+    {
+        OnPropertyChanged(nameof(AllFilesMapped));
+        if (AllFilesMapped)
+        {
+            StatusMessage = "Every file is mapped. Check the episodes, then continue.";
+            return;
+        }
+
+        if (!triedNames)
+        {
+            StatusMessage = "Nothing is mapped yet. Click Auto Map, or choose a file and an episode yourself.";
+            return;
+        }
+
+        if (added == 0)
+        {
+            StatusMessage = Mappings.Count == 0
+                ? $"No files were mapped from their names. {SourceFiles.Count} are still in Files."
+                : "No further files could be mapped from their names.";
+            return;
+        }
+
+        StatusMessage = $"Mapped {added} file(s). {SourceFiles.Count} still unmapped.";
     }
 
     private int AutoMapRemaining()
@@ -758,6 +798,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Plan = null;
         _episodesReady = false;
         PlanSummary = Files.Count == 0 ? "Scan a folder to begin." : "Select a series to match these files.";
+        OnPropertyChanged(nameof(AllFilesMapped));
         NotifyPlan();
         NotifyNavigation();
     }
@@ -813,7 +854,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            StatusMessage = "Could not save your rename template.";
+            StatusMessage = "Could not save your settings.";
         }
     }
 
@@ -825,6 +866,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _options.ScanSubdirectories = ScanSubdirectories;
         _options.IncludeHiddenFiles = IncludeHiddenFiles;
         _options.IncludeEpisodeTitles = IncludeEpisodeTitles;
+        _options.AlwaysAutoMap = AlwaysAutoMap;
         _options.TemplateName = TemplateName;
         _options.CustomTemplate = CustomTemplate ?? string.Empty;
     }

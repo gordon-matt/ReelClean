@@ -15,6 +15,7 @@ public class JsonSettingsStoreTests
         {
             Tmdb = new TmdbOptions { ApiKey = "secret-key" },
             ScanSubdirectories = true,
+            AlwaysAutoMap = true,
             TemplateName = "Kodi",
         };
 
@@ -24,6 +25,7 @@ public class JsonSettingsStoreTests
 
         Assert.Equal("secret-key", loaded.Tmdb.ApiKey);
         Assert.True(loaded.ScanSubdirectories);
+        Assert.True(loaded.AlwaysAutoMap);
         Assert.Equal("Kodi", loaded.TemplateName);
     }
 }
