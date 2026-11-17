@@ -1,6 +1,8 @@
 <img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Logo_Small.png" alt="Logo" width="350" />
 
-Your media, properly named.
+ReelClean is a cross-platform desktop app for one TV folder at a time. It reads episode numbers from filenames, matches them to [TMDB](https://www.themoviedb.org/), shows a rename preview, and only then renames files.
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
 
 ## Screenshots
 
@@ -16,22 +18,6 @@ Your media, properly named.
 ### Step 4: Rename
 <img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Screenshots/04_Rename.JPG" alt="Step 4 - Rename" />
 
-ReelClean is a cross-platform desktop app for one TV folder at a time. It reads episode numbers from filenames, matches them to [TMDB](https://www.themoviedb.org/), shows a rename preview, and only then renames files.
-
-This product uses the TMDB API but is not endorsed or certified by TMDB.
-
-## Layout
-
-The projects follow the same split as ReelSoon, Kinnect, and Snippetz:
-
-- `ReelClean.Core` — enums and constants
-- `ReelClean.Models` — records for files, episodes, matches, and rename plans
-- `ReelClean.Services` — parsing, matching, planning, TMDB, and file operations
-- `ReelClean` — Avalonia UI
-- `ReelClean.Tests` — xUnit
-
-TMDB JSON stays inside `TmdbClient`, the same way ReelSoon hides its TMDB payloads. Services that can fail return `Ardalis.Result`. A filename that does not contain an episode number is a normal parse result, not an error.
-
 ## TMDB key
 
 Create a v3 API key at themoviedb.org, open Settings from the top bar, paste the key in, and click Save.
@@ -40,34 +26,19 @@ Save writes `%AppData%\ReelClean\settings.json` on Windows, and the equivalent a
 
 The rename template, including a custom pattern, is saved in that same user-profile file when you change it.
 
-The client calls `https://api.themoviedb.org/3/` with the `api_key` query parameter, same as ReelSoon.
+The client calls `https://api.themoviedb.org/3/` with the `api_key` query parameter.
 
 ## Downloads
 
-Published releases are on the [GitHub releases page](https://github.com/gordon-matt/ReelClean/releases). Each release has a zip for the platform:
-
-- `ReelClean-win-x64.zip` for 64-bit Windows
-- `ReelClean-osx-arm64.zip` for Macs with Apple silicon
-- `ReelClean-osx-x64.zip` for Intel Macs
-- `ReelClean-linux-x64.zip` for 64-bit Linux
-- `ReelClean-linux-arm64.zip` for ARM64 Linux
+Published releases are on the [GitHub releases page](https://github.com/gordon-matt/ReelClean/releases).
 
 Unzip the download and run `ReelClean` (`ReelClean.exe` on Windows). macOS may warn that the app is from an unidentified developer until it is code-signed and notarised. Linux may ask for system libraries such as fontconfig, depending on the distribution.
-
-To publish a release, open Releases on GitHub, choose Draft a new release, pick or create a version tag, and publish it. The build workflow attaches the zip files to that release. A manual run from the Actions tab builds the same zips but does not attach them to a release.
-
-## Run
-
-```bash
-dotnet test
-dotnet run --project ReelClean
-```
 
 Scanning does not rename anything. High-confidence matches can be renamed after you confirm the preview. Medium, low, and unmatched files have to be assigned or ignored first. Renames stay inside the file's current folder. A history file under the ReelClean application-data folder supports undo when the new files are still in place and the original paths are free.
 
 ## Not in this version
 
-Movies, subtitles, anime numbering, multi-series scans, and installers are out of scope until this workflow is settled.
+Movies, subtitles, anime numbering, multi-series scans, and installers are out of scope.
 
 ## Support
 
