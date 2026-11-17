@@ -42,6 +42,20 @@ The rename template, including a custom pattern, is saved in that same user-prof
 
 The client calls `https://api.themoviedb.org/3/` with the `api_key` query parameter, same as ReelSoon.
 
+## Downloads
+
+Published releases are on the [GitHub releases page](https://github.com/gordon-matt/ReelClean/releases). Each release has a zip for the platform:
+
+- `ReelClean-win-x64.zip` for 64-bit Windows
+- `ReelClean-osx-arm64.zip` for Macs with Apple silicon
+- `ReelClean-osx-x64.zip` for Intel Macs
+- `ReelClean-linux-x64.zip` for 64-bit Linux
+- `ReelClean-linux-arm64.zip` for ARM64 Linux
+
+Unzip the download and run `ReelClean` (`ReelClean.exe` on Windows). macOS may warn that the app is from an unidentified developer until it is code-signed and notarised. Linux may ask for system libraries such as fontconfig, depending on the distribution.
+
+To publish a release, open Releases on GitHub, choose Draft a new release, pick or create a version tag, and publish it. The build workflow attaches the zip files to that release. A manual run from the Actions tab builds the same zips but does not attach them to a release.
+
 ## Run
 
 ```bash

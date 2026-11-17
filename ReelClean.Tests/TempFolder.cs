@@ -12,7 +12,10 @@ public sealed class TempFolder : IDisposable
 
     public string Write(string name, string contents)
     {
-        string full = System.IO.Path.Combine(Path, name);
+        string relative = name
+            .Replace('\\', System.IO.Path.DirectorySeparatorChar)
+            .Replace('/', System.IO.Path.DirectorySeparatorChar);
+        string full = System.IO.Path.Combine(Path, relative);
         string? directory = System.IO.Path.GetDirectoryName(full);
         if (!string.IsNullOrEmpty(directory))
         {

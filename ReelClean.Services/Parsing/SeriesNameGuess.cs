@@ -137,9 +137,9 @@ public static partial class SeriesNameGuess
         bool passedRoot = false;
         while (!string.IsNullOrWhiteSpace(current))
         {
-            string name = Path.GetFileName(current);
+            string name = Path.GetFileName(current.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             bool atRoot = stopAt is not null && PathComparison.Equal(current, stopAt);
-            if (!IsSeasonFolder(name) && !GenericFolders.Contains(name))
+            if (IsSeriesFolder(name))
             {
                 string? cleaned = Clean(name);
                 if (cleaned is not null)
@@ -148,13 +148,14 @@ public static partial class SeriesNameGuess
                 }
             }
 
-            // A scan of "Season 01" or "Downloads" can still take the parent folder name.
-            if (passedRoot)
+            // Season folders sit under the series. Downloads, TV, and a drive root do not.
+            bool climbForSeries = atRoot && IsSeasonFolder(name);
+            if (passedRoot || (atRoot && !climbForSeries))
             {
                 break;
             }
 
-            passedRoot = atRoot;
+            passedRoot = climbForSeries;
 
             string? parent = Path.GetDirectoryName(current);
             if (string.IsNullOrEmpty(parent) || string.Equals(parent, current, StringComparison.OrdinalIgnoreCase))
@@ -166,6 +167,22 @@ public static partial class SeriesNameGuess
         }
 
         return null;
+    }
+
+    private static bool IsSeriesFolder(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name is "." or "..")
+        {
+            return false;
+        }
+
+        // "D:" is a drive on Windows and, on Linux, just the parent of a fake D:\ path.
+        if (name.Length == 2 && name[1] == ':')
+        {
+            return false;
+        }
+
+        return !IsSeasonFolder(name) && !GenericFolders.Contains(name);
     }
 
     private static bool IsSeasonFolder(string name)

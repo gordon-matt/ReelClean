@@ -76,13 +76,15 @@ public class RenamePlannerTests
         using var folder = new TempFolder();
         var first = Match(folder, "A.S01E01.mkv", [Episode(1, 1, "Pilot")]);
         var second = Match(folder, "B.S01E01.mkv", [Episode(1, 1, "Pilot")]);
-        folder.Write("The Office (US) - S01E02.mkv", "already there");
-        var occupied = Match(folder, "C.S01E02.mkv", [Episode(1, 2, "Next")]);
-
         var duplicates = _planner.CreatePlan(folder.Path, Series, [first, second], RenameTemplates.PatternFor(RenameTemplates.MinimalName), false);
         Assert.All(duplicates.Operations, operation => Assert.Equal(PlanStatus.Invalid, operation.Status));
 
-        var collision = _planner.CreatePlan(folder.Path, Series, [occupied], RenameTemplates.PatternFor(RenameTemplates.MinimalName), false);
+        var occupied = Match(folder, "C.S01E02.mkv", [Episode(1, 2, "Next")]);
+        string template = RenameTemplates.PatternFor(RenameTemplates.MinimalName);
+        string destination = Assert.Single(_planner.CreatePlan(folder.Path, Series, [occupied], template, false).Operations).DestinationPath;
+        File.WriteAllText(destination, "already there");
+
+        var collision = _planner.CreatePlan(folder.Path, Series, [occupied], template, false);
         Assert.Equal(PlanStatus.Invalid, Assert.Single(collision.Operations).Status);
         Assert.Contains("already exists", Assert.Single(collision.Operations).Messages[0], StringComparison.Ordinal);
     }
