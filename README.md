@@ -1,6 +1,16 @@
-# ReelClean
+<img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Logo_Small.png" alt="Logo" width="350" />
 
 Your media, properly named.
+
+## Screenshots
+
+<img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Screenshots/01_Folder.JPG" alt="Step 1 - Select Folder" />
+
+<img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Screenshots/02_Series.JPG" alt="Step 2 - Select Series" />
+
+<img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Screenshots/03_Match.JPG" alt="Step 3 - Match" />
+
+<img src="https://github.com/gordon-matt/ReelClean/raw/master/_Misc/Screenshots/04_Rename.JPG" alt="Step 4 - Rename" />
 
 ReelClean is a cross-platform desktop app for one TV folder at a time. It reads episode numbers from filenames, matches them to [TMDB](https://www.themoviedb.org/), shows a rename preview, and only then renames files.
 
@@ -40,3 +50,34 @@ Scanning does not rename anything. High-confidence matches can be renamed after 
 ## Not in this version
 
 Movies, subtitles, anime numbering, multi-series scans, and installers are out of scope until this workflow is settled.
+
+## Support
+
+If you find this project useful, consider supporting its development.
+
+<p align="center">
+  <a href="https://buymeacoffee.com/vnmatt">
+    <img src="https://github.com/gordon-matt/MyResume/raw/gh-pages/assets/images/BuyMeACoffee_Logo.png"
+         alt="Buy Me a Coffee"
+         height="40">
+  </a>&nbsp;&nbsp;&nbsp;
+  <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=gordon_matt%40live%2ecom&lc=AU&currency_code=AUD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted">
+    <img src="https://github.com/gordon-matt/MyResume/raw/gh-pages/assets/images/PayPal_Logo.png"
+         alt="Donate with PayPal"
+         height="40">
+  </a>
+</p>
+
+<p align="center">
+  Prefer using your phone? Scan the QR code:
+</p>
+
+<p align="center">
+  <a href="https://buymeacoffee.com/vnmatt">
+    <img src="https://github.com/gordon-matt/MyResume/raw/gh-pages/assets/images/BuyMeACoffee_QR.png"
+         alt="Buy Me a Coffee QR Code"
+         width="180">
+  </a>
+</p>
+
+<img src="https://komarev.com/ghpvc/?username=gordon-matt&label=GitHub%20Hits%20Since%202025-06-01%3A%20&color=ff0000&style=flat" alt="gordon-matt" />
